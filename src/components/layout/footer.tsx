@@ -9,8 +9,8 @@ const playfair = Playfair_Display({
 
 const quickLinks = [
   { label: "Home", href: "/" },
-  { label: "About Us", href: "/#about" },
-  { label: "Events", href: "/#events" },
+  { label: "About Us", href: "/about" },
+  { label: "Events", href: "/events" },
   { label: "Auditions", href: "/auditions" },
 ];
 
@@ -45,7 +45,12 @@ function InstagramIcon() {
     >
       <rect x="3" y="3" width="18" height="18" rx="5" />
       <circle cx="12" cy="12" r="4" />
-      <circle cx="17.5" cy="6.5" r="1" className="fill-current stroke-none" />
+      <circle
+        cx="17.5"
+        cy="6.5"
+        r="1"
+        className="fill-current stroke-none"
+      />
     </svg>
   );
 }
@@ -67,8 +72,8 @@ export default function Footer() {
 
             <p className="mt-5 max-w-sm text-sm leading-7 text-slate-300">
               Amplifying talent and fostering musical excellence at Sylhet
-              Engineering College. A community for musicians, performers, and
-              music lovers.
+              Engineering College. A community for musicians, performers,
+              and music lovers.
             </p>
 
             <div className="mt-7 flex items-center gap-3">
@@ -172,8 +177,8 @@ export default function Footer() {
         {/* Copyright */}
         <div className="mt-14 border-t border-white/10 pt-7 text-center">
           <p className="text-sm text-slate-400">
-            © {new Date().getFullYear()} Pentatone Musical Club, Sylhet
-            Engineering College. All rights reserved.
+            © 2026 Pentatone Musical Club, Sylhet Engineering College. All
+            rights reserved.
           </p>
         </div>
       </div>
