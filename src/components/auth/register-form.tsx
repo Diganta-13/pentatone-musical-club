@@ -1,29 +1,20 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { Eye, EyeOff } from "lucide-react";
 import { useState, type FormEvent } from "react";
 
-const departments = [
-  "Computer Science and Engineering",
-  "Electrical and Electronic Engineering",
-  "Civil Engineering",
-];
-
-const musicalSkills = [
-  "Vocal",
-  "Guitar",
-  "Keyboard",
-  "Drums",
-  "Violin",
-  "Flute",
-  "Tabla",
-  "Other",
-];
-
 export default function RegisterForm() {
-  const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
+  const router = useRouter();
+
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] =
+    useState(false);
+
   const [error, setError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const inputClass =
     "h-14 w-full rounded-xl border border-transparent bg-[#eef1ff] px-5 text-sm text-slate-900 outline-none transition placeholder:text-slate-500 focus:border-red-500 focus:bg-white focus:ring-4 focus:ring-red-100";
@@ -31,54 +22,126 @@ export default function RegisterForm() {
   const labelClass =
     "mb-2 block text-xs font-bold uppercase tracking-[0.12em] text-slate-800";
 
-  function handleSkillChange(skill: string) {
-    setSelectedSkills((currentSkills) => {
-      if (currentSkills.includes(skill)) {
-        return currentSkills.filter((item) => item !== skill);
-      }
-
-      return [...currentSkills, skill];
-    });
-  }
-
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(
+    event: FormEvent<HTMLFormElement>,
+  ) {
     event.preventDefault();
+
+    if (isSubmitting) return;
 
     setError("");
     setSuccessMessage("");
 
-    const formData = new FormData(event.currentTarget);
+    const form = event.currentTarget;
+    const formData = new FormData(form);
 
-    const password = String(formData.get("password") || "");
+    const fullName = String(
+      formData.get("fullName") || "",
+    ).trim();
+
+    const email = String(formData.get("email") || "")
+      .trim()
+      .toLowerCase();
+
+    const password = String(
+      formData.get("password") || "",
+    );
+
     const confirmPassword = String(
       formData.get("confirmPassword") || "",
     );
 
+    if (fullName.length < 2) {
+      setError(
+        "Full name must contain at least 2 characters.",
+      );
+      return;
+    }
+
+    if (!email) {
+      setError("Please enter your email address.");
+      return;
+    }
+
+    if (!email.includes("@")) {
+      setError("Please enter a valid email address.");
+      return;
+    }
+
     if (password.length < 8) {
-      setError("Password must contain at least 8 characters.");
+      setError(
+        "Password must contain at least 8 characters.",
+      );
       return;
     }
 
     if (password !== confirmPassword) {
-      setError("Password and confirm password do not match.");
+      setError(
+        "Password and confirm password do not match.",
+      );
       return;
     }
 
-    if (selectedSkills.length === 0) {
-      setError("Please select at least one musical skill.");
-      return;
-    }
+    try {
+      setIsSubmitting(true);
 
-    setSuccessMessage(
-      "Form validation successful. Database connection will be added next.",
+      const response = await fetch("/api/auth/register", {
+        method: "POST",
+
+        headers: {
+          "Content-Type": "application/json",
+        },
+
+        body: JSON.stringify({
+          fullName,
+          email,
+          password,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setError(
+          data.message ||
+            "Unable to create your account.",
+        );
+        return;
+      }
+
+      setSuccessMessage(
+        "Account created successfully. Redirecting to login...",
+      );
+
+      form.reset();
+
+      setTimeout(() => {
+        router.push("/login?registered=true");
+      }, 1200);
+    } catch {
+      setError(
+        "Unable to connect to the server. Please try again.",
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
+  function handleGoogleSignup() {
+    setError("");
+    setSuccessMessage("");
+
+    setError(
+      "Google sign-in is not connected yet. Please use email and password for now.",
     );
   }
 
   return (
     <div className="mx-auto w-full max-w-[720px]">
+      {/* Heading */}
       <div>
         <p className="text-sm font-bold uppercase tracking-[0.2em] text-red-600">
-          Join the community
+          Welcome to Pentatone
         </p>
 
         <h1 className="mt-3 text-4xl font-extrabold tracking-tight text-[#111827] xl:text-5xl">
@@ -86,16 +149,24 @@ export default function RegisterForm() {
         </h1>
 
         <p className="mt-4 text-base leading-7 text-slate-600">
-          Enter your information to register as a member of Pentatone
-          Musical Club.
+          Create your Pentatone account to access club
+          activities and membership opportunities.
+        </p>
+
+        <p className="mt-2 text-sm text-slate-500">
+          After creating your account, you can apply for
+          official club membership.
         </p>
       </div>
 
-      <form onSubmit={handleSubmit} className="mt-9">
-        <div className="grid grid-cols-2 gap-x-6 gap-y-5">
-          {/* Full name */}
+      <form onSubmit={handleSubmit} className="mt-10">
+        <div className="space-y-6">
+          {/* Full Name */}
           <div>
-            <label htmlFor="fullName" className={labelClass}>
+            <label
+              htmlFor="fullName"
+              className={labelClass}
+            >
               Full Name
             </label>
 
@@ -105,70 +176,16 @@ export default function RegisterForm() {
               type="text"
               placeholder="Enter your full name"
               required
+              minLength={2}
+              maxLength={120}
               autoComplete="name"
-              className={inputClass}
-            />
-          </div>
-
-          {/* Student ID */}
-          <div>
-            <label htmlFor="studentId" className={labelClass}>
-              Student ID
-            </label>
-
-            <input
-              id="studentId"
-              name="studentId"
-              type="text"
-              placeholder="Example: 2022331500"
-              required
-              className={inputClass}
-            />
-          </div>
-
-          {/* Department */}
-          <div>
-            <label htmlFor="department" className={labelClass}>
-              Department
-            </label>
-
-            <select
-              id="department"
-              name="department"
-              required
-              defaultValue=""
-              className={`${inputClass} cursor-pointer`}
-            >
-              <option value="" disabled>
-                Select department
-              </option>
-
-              {departments.map((department) => (
-                <option key={department} value={department}>
-                  {department}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Batch */}
-          <div>
-            <label htmlFor="batch" className={labelClass}>
-              Batch
-            </label>
-
-            <input
-              id="batch"
-              name="batch"
-              type="text"
-              placeholder="Example: 22"
-              required
+              disabled={isSubmitting}
               className={inputClass}
             />
           </div>
 
           {/* Email */}
-          <div className="col-span-2">
+          <div>
             <label htmlFor="email" className={labelClass}>
               Email Address
             </label>
@@ -179,102 +196,118 @@ export default function RegisterForm() {
               type="email"
               placeholder="Enter your email address"
               required
+              maxLength={255}
               autoComplete="email"
+              disabled={isSubmitting}
               className={inputClass}
             />
           </div>
 
-          {/* Phone */}
-          <div className="col-span-2">
-            <label htmlFor="phone" className={labelClass}>
-              Phone Number
-            </label>
+          {/* Password row */}
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+            {/* Password */}
+            <div>
+              <label
+                htmlFor="password"
+                className={labelClass}
+              >
+                Password
+              </label>
 
-            <input
-              id="phone"
-              name="phone"
-              type="tel"
-              placeholder="+880 1XXXXXXXXX"
-              required
-              autoComplete="tel"
-              className={inputClass}
-            />
-          </div>
+              <div className="relative">
+                <input
+                  id="password"
+                  name="password"
+                  type={
+                    showPassword
+                      ? "text"
+                      : "password"
+                  }
+                  placeholder="Minimum 8 characters"
+                  required
+                  minLength={8}
+                  maxLength={128}
+                  autoComplete="new-password"
+                  disabled={isSubmitting}
+                  className={`${inputClass} pr-14`}
+                />
 
-          {/* Password */}
-          <div>
-            <label htmlFor="password" className={labelClass}>
-              Password
-            </label>
-
-            <input
-              id="password"
-              name="password"
-              type="password"
-              placeholder="Minimum 8 characters"
-              required
-              minLength={8}
-              autoComplete="new-password"
-              className={inputClass}
-            />
-          </div>
-
-          {/* Confirm password */}
-          <div>
-            <label htmlFor="confirmPassword" className={labelClass}>
-              Confirm Password
-            </label>
-
-            <input
-              id="confirmPassword"
-              name="confirmPassword"
-              type="password"
-              placeholder="Repeat your password"
-              required
-              minLength={8}
-              autoComplete="new-password"
-              className={inputClass}
-            />
-          </div>
-
-          {/* Musical skills */}
-          <fieldset className="col-span-2">
-            <legend className={labelClass}>
-              Instrument / Primary Skill
-            </legend>
-
-            <div className="grid grid-cols-4 gap-3">
-              {musicalSkills.map((skill) => {
-                const isSelected = selectedSkills.includes(skill);
-
-                return (
-                  <label
-                    key={skill}
-                    className={`flex min-h-13 cursor-pointer items-center gap-3 rounded-xl border px-4 transition ${
-                      isSelected
-                        ? "border-red-600 bg-red-50 text-red-700"
-                        : "border-red-200 bg-white text-slate-700 hover:border-red-500"
-                    }`}
-                  >
-                    <input
-                      type="checkbox"
-                      name="skills"
-                      value={skill}
-                      checked={isSelected}
-                      onChange={() => handleSkillChange(skill)}
-                      className="h-4 w-4 cursor-pointer accent-red-600"
-                    />
-
-                    <span className="text-xs font-semibold">
-                      {skill}
-                    </span>
-                  </label>
-                );
-              })}
+                <button
+                  type="button"
+                  onClick={() =>
+                    setShowPassword(
+                      (current) => !current,
+                    )
+                  }
+                  aria-label={
+                    showPassword
+                      ? "Hide password"
+                      : "Show password"
+                  }
+                  className="absolute top-1/2 right-4 -translate-y-1/2 text-slate-500 transition hover:text-red-600"
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-5 w-5" />
+                  ) : (
+                    <Eye className="h-5 w-5" />
+                  )}
+                </button>
+              </div>
             </div>
-          </fieldset>
+
+            {/* Confirm Password */}
+            <div>
+              <label
+                htmlFor="confirmPassword"
+                className={labelClass}
+              >
+                Confirm Password
+              </label>
+
+              <div className="relative">
+                <input
+                  id="confirmPassword"
+                  name="confirmPassword"
+                  type={
+                    showConfirmPassword
+                      ? "text"
+                      : "password"
+                  }
+                  placeholder="Repeat your password"
+                  required
+                  minLength={8}
+                  maxLength={128}
+                  autoComplete="new-password"
+                  disabled={isSubmitting}
+                  className={`${inputClass} pr-14`}
+                />
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    setShowConfirmPassword(
+                      (current) => !current,
+                    )
+                  }
+                  aria-label={
+                    showConfirmPassword
+                      ? "Hide confirm password"
+                      : "Show confirm password"
+                  }
+                  className="absolute top-1/2 right-4 -translate-y-1/2 text-slate-500 transition hover:text-red-600"
+                >
+                  {showConfirmPassword ? (
+                    <EyeOff className="h-5 w-5" />
+                  ) : (
+                    <Eye className="h-5 w-5" />
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
 
+        {/* Error */}
         {error && (
           <div
             role="alert"
@@ -284,6 +317,7 @@ export default function RegisterForm() {
           </div>
         )}
 
+        {/* Success */}
         {successMessage && (
           <div
             role="status"
@@ -293,14 +327,41 @@ export default function RegisterForm() {
           </div>
         )}
 
+        {/* Create account */}
         <button
           type="submit"
-          className="mt-8 flex h-15 w-full items-center justify-center rounded-xl bg-[#ed0000] px-8 text-sm font-bold uppercase tracking-[0.08em] text-white shadow-lg shadow-red-200 transition duration-300 hover:-translate-y-1 hover:bg-red-700"
+          disabled={isSubmitting}
+          className="mt-8 flex h-15 w-full items-center justify-center rounded-xl bg-[#ed0000] px-8 text-sm font-bold uppercase tracking-[0.08em] text-white shadow-lg shadow-red-200 transition duration-300 hover:-translate-y-1 hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0"
         >
-          Create Account
+          {isSubmitting
+            ? "Creating Account..."
+            : "Create Account"}
         </button>
 
-        <p className="mt-6 text-center text-sm text-slate-600">
+        {/* Divider */}
+        <div className="my-8 flex items-center gap-4">
+          <span className="h-px flex-1 bg-red-100" />
+
+          <span className="text-[11px] font-bold uppercase tracking-[0.08em] text-slate-500">
+            Or continue with
+          </span>
+
+          <span className="h-px flex-1 bg-red-100" />
+        </div>
+
+        {/* Google */}
+        <button
+          type="button"
+          onClick={handleGoogleSignup}
+          disabled={isSubmitting}
+          className="flex h-14 w-full items-center justify-center gap-3 rounded-xl border-2 border-slate-900 bg-white px-6 text-sm font-bold uppercase tracking-[0.1em] text-slate-900 transition hover:border-red-600 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          <GoogleIcon />
+          Continue with Google
+        </button>
+
+        {/* Login */}
+        <p className="mt-7 text-center text-sm text-slate-600">
           Already have an account?{" "}
           <Link
             href="/login"
@@ -311,10 +372,40 @@ export default function RegisterForm() {
         </p>
 
         <p className="mt-4 text-center text-xs leading-6 text-slate-500">
-          By registering, you agree to follow the rules and guidelines of
-          Pentatone Musical Club.
+          By creating an account, you agree to follow the
+          rules and guidelines of Pentatone Musical Club.
         </p>
       </form>
     </div>
+  );
+}
+
+function GoogleIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+      className="h-5 w-5"
+    >
+      <path
+        fill="#4285F4"
+        d="M21.6 12.23c0-.71-.06-1.4-.18-2.07H12v3.92h5.38a4.6 4.6 0 0 1-2 3.02v2.55h3.24c1.9-1.75 2.98-4.33 2.98-7.42Z"
+      />
+
+      <path
+        fill="#34A853"
+        d="M12 22c2.7 0 4.97-.9 6.62-2.35l-3.24-2.55c-.9.6-2.05.96-3.38.96-2.61 0-4.82-1.76-5.61-4.13H3.04v2.63A10 10 0 0 0 12 22Z"
+      />
+
+      <path
+        fill="#FBBC05"
+        d="M6.39 13.93A6 6 0 0 1 6.08 12c0-.67.11-1.32.31-1.93V7.44H3.04A10 10 0 0 0 2 12c0 1.61.38 3.14 1.04 4.56l3.35-2.63Z"
+      />
+
+      <path
+        fill="#EA4335"
+        d="M12 5.94c1.47 0 2.79.51 3.83 1.5l2.87-2.88A9.65 9.65 0 0 0 12 2a10 10 0 0 0-8.96 5.44l3.35 2.63C7.18 7.7 9.39 5.94 12 5.94Z"
+      />
+    </svg>
   );
 }

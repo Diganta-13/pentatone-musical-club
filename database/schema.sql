@@ -16,7 +16,11 @@ CREATE TABLE IF NOT EXISTS users (
 
     full_name VARCHAR(120) NOT NULL,
     email VARCHAR(255) NOT NULL UNIQUE,
-    password_hash VARCHAR(255) NOT NULL,
+
+    password_hash VARCHAR(255) NULL,
+    google_id VARCHAR(255) NULL UNIQUE,
+    avatar_url VARCHAR(500) NULL,
+    email_verified BOOLEAN NOT NULL DEFAULT FALSE,
 
     role_id INT NOT NULL,
     department_id INT NULL,
