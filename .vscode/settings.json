@@ -1,0 +1,21 @@
+{
+    "sqltools.connections": [
+        {
+            "mysqlOptions": {
+                "authProtocol": "default",
+                "enableSsl": "Enabled",
+                "ssl": {
+                    "ca": "certs/ca.pem"
+                }
+            },
+            "ssh": "Disabled",
+            "previewLimit": 50,
+            "server": "pentatone-club-db-digantahalder08.i.aivencloud.com",
+            "port": 12289,
+            "driver": "MySQL",
+            "name": "Pentatone Aiven DB",
+            "database": "defaultdb",
+            "username": "avnadmin"
+        }
+    ]
+}
