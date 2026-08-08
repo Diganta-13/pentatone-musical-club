@@ -51,6 +51,7 @@ CREATE TABLE IF NOT EXISTS membership_requests (
     session VARCHAR(30) NOT NULL,
     current_semester VARCHAR(50) NOT NULL,
     phone VARCHAR(30) NOT NULL,
+    primary_skill VARCHAR(100) NOT NULL,
 
     proof_type VARCHAR(50) NOT NULL,
     proof_url VARCHAR(500) NOT NULL,

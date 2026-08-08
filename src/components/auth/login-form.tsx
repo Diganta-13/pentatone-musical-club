@@ -62,17 +62,21 @@ export default function LoginForm({
     const rememberMe =
       formData.get("rememberMe") === "on";
 
+    // Email validation
     if (!email || !email.includes("@")) {
       setError(
         "Please enter a valid email address.",
       );
+
       return;
     }
 
+    // Password validation
     if (password.length < 8) {
       setError(
         "Password must contain at least 8 characters.",
       );
+
       return;
     }
 
@@ -85,7 +89,8 @@ export default function LoginForm({
           method: "POST",
 
           headers: {
-            "Content-Type": "application/json",
+            "Content-Type":
+              "application/json",
           },
 
           body: JSON.stringify({
@@ -96,13 +101,15 @@ export default function LoginForm({
         },
       );
 
-      const data = await response.json();
+      const data =
+        await response.json();
 
       if (!response.ok) {
         setError(
           data.message ||
             "Unable to sign in.",
         );
+
         return;
       }
 
@@ -111,7 +118,9 @@ export default function LoginForm({
       );
 
       setTimeout(() => {
-        if (data.user?.role === "ADMIN") {
+        if (
+          data.user?.role === "ADMIN"
+        ) {
           router.push("/admin");
         } else {
           router.push("/dashboard");
@@ -128,15 +137,9 @@ export default function LoginForm({
     }
   }
 
-  function handleGoogleLogin() {
-    setSuccessMessage("");
-    setError(
-      "Google sign-in will be connected next.",
-    );
-  }
-
   return (
     <div className="w-full max-w-[470px] border-t-4 border-[#d40000] bg-white px-8 py-10 shadow-[0_20px_50px_rgba(15,23,42,0.12)] sm:px-12 sm:py-12">
+      {/* Heading */}
       <div>
         <h1 className="text-4xl font-extrabold tracking-tight text-[#111827]">
           Welcome Back
@@ -147,10 +150,12 @@ export default function LoginForm({
         </p>
       </div>
 
+      {/* Login Form */}
       <form
         onSubmit={handleSubmit}
         className="mt-10"
       >
+        {/* Email */}
         <div>
           <label
             htmlFor="email"
@@ -171,22 +176,14 @@ export default function LoginForm({
           />
         </div>
 
+        {/* Password */}
         <div className="mt-6">
-          <div className="mb-2 flex items-center justify-between">
-            <label
-              htmlFor="password"
-              className="text-xs font-bold uppercase tracking-[0.08em] text-slate-800"
-            >
-              Password
-            </label>
-
-            <Link
-              href="/forgot-password"
-              className="text-[11px] font-bold uppercase text-red-600 transition hover:text-red-700"
-            >
-              Forgot Password?
-            </Link>
-          </div>
+          <label
+            htmlFor="password"
+            className={labelClass}
+          >
+            Password
+          </label>
 
           <div className="relative">
             <input
@@ -217,6 +214,7 @@ export default function LoginForm({
                   ? "Hide password"
                   : "Show password"
               }
+              disabled={isSubmitting}
               className="absolute top-1/2 right-4 -translate-y-1/2 text-slate-500 transition hover:text-red-600"
             >
               {showPassword ? (
@@ -228,6 +226,7 @@ export default function LoginForm({
           </div>
         </div>
 
+        {/* Remember Me */}
         <label className="mt-6 flex w-fit cursor-pointer items-center gap-3 text-sm text-slate-600">
           <input
             type="checkbox"
@@ -236,9 +235,12 @@ export default function LoginForm({
             className="h-5 w-5 cursor-pointer accent-red-600"
           />
 
-          <span>Remember me for 30 days</span>
+          <span>
+            Remember me for 30 days
+          </span>
         </label>
 
+        {/* Error Message */}
         {error && (
           <div
             role="alert"
@@ -248,6 +250,7 @@ export default function LoginForm({
           </div>
         )}
 
+        {/* Success Message */}
         {successMessage && (
           <div
             role="status"
@@ -257,6 +260,7 @@ export default function LoginForm({
           </div>
         )}
 
+        {/* Login Button */}
         <button
           type="submit"
           disabled={isSubmitting}
@@ -267,63 +271,19 @@ export default function LoginForm({
             : "Login to Account"}
         </button>
 
-        <div className="my-8 flex items-center gap-4">
-          <span className="h-px flex-1 bg-red-100" />
-
-          <span className="text-[11px] font-bold uppercase tracking-[0.05em] text-slate-500">
-            Or continue with
-          </span>
-
-          <span className="h-px flex-1 bg-red-100" />
+        {/* Create Account */}
+        <div className="mt-8 border-t border-slate-200 pt-7">
+          <p className="text-center text-sm text-slate-600">
+            Don&apos;t have an account?{" "}
+            <Link
+              href="/register"
+              className="font-bold text-red-600 transition hover:text-red-700"
+            >
+              Create Account
+            </Link>
+          </p>
         </div>
-
-        <button
-          type="button"
-          onClick={handleGoogleLogin}
-          disabled={isSubmitting}
-          className="flex h-14 w-full items-center justify-center gap-3 border-2 border-slate-900 bg-white px-6 text-sm font-bold uppercase tracking-[0.12em] text-slate-900 transition hover:border-red-600 hover:text-red-600 disabled:opacity-60"
-        >
-          <GoogleIcon />
-          Continue with Google
-        </button>
-
-        <p className="mt-8 text-center text-sm text-slate-600">
-          Don&apos;t have an account?{" "}
-          <Link
-            href="/register"
-            className="font-bold text-red-600 transition hover:text-red-700"
-          >
-            Create Account
-          </Link>
-        </p>
       </form>
     </div>
-  );
-}
-
-function GoogleIcon() {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      aria-hidden="true"
-      className="h-5 w-5"
-    >
-      <path
-        fill="#4285F4"
-        d="M21.6 12.23c0-.71-.06-1.4-.18-2.07H12v3.92h5.38a4.6 4.6 0 0 1-2 3.02v2.55h3.24c1.9-1.75 2.98-4.33 2.98-7.42Z"
-      />
-      <path
-        fill="#34A853"
-        d="M12 22c2.7 0 4.97-.9 6.62-2.35l-3.24-2.55c-.9.6-2.05.96-3.38.96-2.61 0-4.82-1.76-5.61-4.13H3.04v2.63A10 10 0 0 0 12 22Z"
-      />
-      <path
-        fill="#FBBC05"
-        d="M6.39 13.93A6 6 0 0 1 6.08 12c0-.67.11-1.32.31-1.93V7.44H3.04A10 10 0 0 0 2 12c0 1.61.38 3.14 1.04 4.56l3.35-2.63Z"
-      />
-      <path
-        fill="#EA4335"
-        d="M12 5.94c1.47 0 2.79.51 3.83 1.5l2.87-2.88A9.65 9.65 0 0 0 12 2a10 10 0 0 0-8.96 5.44l3.35 2.63C7.18 7.7 9.39 5.94 12 5.94Z"
-      />
-    </svg>
   );
 }
