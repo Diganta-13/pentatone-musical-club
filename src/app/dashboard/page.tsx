@@ -1,95 +1,51 @@
 import Link from "next/link";
-import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+
 import type { RowDataPacket } from "mysql2";
 
 import LogoutButton from "@/components/auth/logout-button";
+import BrandLogo from "@/components/layout/brand-logo";
+import Footer from "@/components/layout/footer";
 
 import db from "@/lib/db";
 
 import {
-  SESSION_COOKIE_NAME,
-  verifySessionToken,
-} from "@/lib/auth";
+  getCurrentUser,
+} from "@/lib/current-user";
 
-interface UserRow extends RowDataPacket {
+interface MembershipRow
+  extends RowDataPacket {
   id: number;
-  full_name: string;
-  email: string;
-  role: string;
-  is_active: number | boolean;
-}
 
-interface MembershipRow extends RowDataPacket {
-  id: number;
   status:
     | "PENDING"
     | "APPROVED"
     | "REJECTED";
+
   admin_note: string | null;
+
   created_at: Date;
 }
 
 export default async function DashboardPage() {
   /*
-   * ============================
-   * AUTHENTICATION
-   * ============================
+   * =================================
+   * CURRENT AUTHENTICATED USER
+   * =================================
+   *
+   * getCurrentUser() reads the
+   * current role directly from DB.
    */
 
-  const cookieStore = await cookies();
+  const user =
+    await getCurrentUser();
 
-  const token = cookieStore.get(
-    SESSION_COOKIE_NAME,
-  )?.value;
-
-  if (!token) {
-    redirect("/login");
-  }
-
-  const session =
-    await verifySessionToken(token);
-
-  if (!session) {
+  if (!user) {
     redirect("/login");
   }
 
   /*
-   * ============================
-   * GET CURRENT USER FROM DB
-   * ============================
-   */
-
-  const [users] =
-    await db.execute<UserRow[]>(
-      `
-        SELECT
-          u.id,
-          u.full_name,
-          u.email,
-          u.is_active,
-          r.name AS role
-        FROM users u
-        INNER JOIN roles r
-          ON r.id = u.role_id
-        WHERE u.id = ?
-        LIMIT 1
-      `,
-      [session.userId],
-    );
-
-  if (users.length === 0) {
-    redirect("/login");
-  }
-
-  const user = users[0];
-
-  if (!user.is_active) {
-    redirect("/login");
-  }
-
-  /*
-   * Admin uses separate dashboard
+   * Admin has a separate dashboard
    */
 
   if (user.role === "ADMIN") {
@@ -97,9 +53,9 @@ export default async function DashboardPage() {
   }
 
   /*
-   * ============================
-   * GET LATEST MEMBERSHIP REQUEST
-   * ============================
+   * =================================
+   * LATEST MEMBERSHIP APPLICATION
+   * =================================
    */
 
   const [membershipRequests] =
@@ -112,9 +68,13 @@ export default async function DashboardPage() {
           status,
           admin_note,
           created_at
+
         FROM membership_requests
+
         WHERE user_id = ?
+
         ORDER BY created_at DESC
+
         LIMIT 1
       `,
       [user.id],
@@ -126,267 +86,321 @@ export default async function DashboardPage() {
       : null;
 
   return (
-    <main className="min-h-screen bg-[#f7f8ff]">
-      {/* ========================= */}
-      {/* DASHBOARD HEADER */}
-      {/* ========================= */}
+    <>
+      <main className="min-h-screen bg-[#f7f8ff]">
+        {/* ================================= */}
+        {/* HEADER */}
+        {/* ================================= */}
 
-      <header className="border-b border-slate-200 bg-white">
-        <div className="mx-auto flex h-20 max-w-6xl items-center justify-between px-6">
-          <Link
-            href="/"
-            className="text-2xl font-extrabold tracking-tight text-red-600"
-          >
-            Pentatone
-          </Link>
+        <header className="border-b border-slate-200 bg-white">
+          <div className="mx-auto flex h-20 max-w-6xl items-center justify-between px-6 lg:px-8">
+            {/* Official Pentatone Logo */}
 
-          <div className="flex items-center gap-4">
-            <Link
-              href="/"
-              className="text-sm font-semibold text-slate-600 transition hover:text-red-600"
-            >
-              Back to Website
-            </Link>
+            <BrandLogo
+              priority
+              className="h-12"
+            />
+
+            {/* Account Action */}
 
             <LogoutButton />
           </div>
-        </div>
-      </header>
+        </header>
 
-      {/* ========================= */}
-      {/* DASHBOARD CONTENT */}
-      {/* ========================= */}
+        {/* ================================= */}
+        {/* DASHBOARD CONTENT */}
+        {/* ================================= */}
 
-      <div className="mx-auto max-w-5xl px-6 py-16">
-        <div className="flex flex-col justify-between gap-6 sm:flex-row sm:items-end">
-          <div>
-            <p className="text-sm font-bold uppercase tracking-[0.18em] text-red-600">
-              Pentatone Dashboard
-            </p>
+        <div className="mx-auto max-w-5xl px-6 py-14 lg:px-8 lg:py-16">
+          {/* Dashboard Heading */}
 
-            <h1 className="mt-3 text-4xl font-extrabold tracking-tight text-slate-900">
-              Welcome, {user.full_name}
-            </h1>
-
-            <p className="mt-3 text-slate-600">
-              Manage your Pentatone account
-              and club membership.
-            </p>
-          </div>
-
-          {/* Role Badge */}
-          <div className="w-fit rounded-full bg-slate-900 px-5 py-2 text-xs font-bold uppercase tracking-[0.12em] text-white">
-            {user.role === "MEMBER"
-              ? "Member"
-              : "General User"}
-          </div>
-        </div>
-
-        {/* ========================= */}
-        {/* ACCOUNT CARD */}
-        {/* ========================= */}
-
-        <div className="mt-10 rounded-2xl border border-slate-100 bg-white p-8 shadow-sm">
-          <div className="grid gap-8 sm:grid-cols-2">
-            {/* Name */}
-
+          <div className="flex flex-col justify-between gap-6 sm:flex-row sm:items-end">
             <div>
-              <p className="text-sm text-slate-500">
-                Full Name
-              </p>
+              <div className="flex items-center gap-4">
+                <span className="h-[3px] w-10 bg-red-600" />
 
-              <p className="mt-2 text-lg font-semibold text-slate-900">
-                {user.full_name}
+                <p className="text-xs font-bold uppercase tracking-[0.18em] text-red-600">
+                  Pentatone Dashboard
+                </p>
+              </div>
+
+              <h1 className="mt-4 text-4xl font-extrabold tracking-tight text-slate-900 md:text-5xl">
+                Welcome, {user.fullName}
+              </h1>
+
+              <p className="mt-4 max-w-2xl text-sm leading-7 text-slate-600">
+                Manage your Pentatone account
+                and keep track of your official
+                club membership.
               </p>
             </div>
 
-            {/* Email */}
+            {/* Role Badge */}
 
-            <div>
-              <p className="text-sm text-slate-500">
-                Email Address
-              </p>
-
-              <p className="mt-2 text-lg font-semibold text-slate-900">
-                {user.email}
-              </p>
-            </div>
-
-            {/* Role */}
-
-            <div>
-              <p className="text-sm text-slate-500">
-                Account Role
-              </p>
-
-              <p className="mt-2 text-lg font-bold text-slate-900">
-                {user.role}
-              </p>
+            <div
+              className={`w-fit rounded-full px-5 py-2.5 text-xs font-bold uppercase tracking-[0.12em] ${
+                user.role === "MEMBER"
+                  ? "bg-green-100 text-green-700"
+                  : "bg-slate-900 text-white"
+              }`}
+            >
+              {user.role === "MEMBER"
+                ? "Official Member"
+                : "General User"}
             </div>
           </div>
 
-          {/* ========================= */}
-          {/* MEMBER */}
-          {/* ========================= */}
+          {/* ================================= */}
+          {/* ACCOUNT INFORMATION */}
+          {/* ================================= */}
 
-          {user.role === "MEMBER" && (
-            <div className="mt-10 rounded-2xl border border-green-200 bg-green-50 p-6">
-              <div className="flex items-start gap-4">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-green-600 font-bold text-white">
-                  ✓
+          <section className="mt-10 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_14px_40px_rgba(15,23,42,0.06)]">
+            {/* Card Header */}
+
+            <div className="border-b border-slate-100 px-7 py-5">
+              <h2 className="text-lg font-bold text-slate-900">
+                Account Information
+              </h2>
+
+              <p className="mt-1 text-sm text-slate-500">
+                Your registered Pentatone
+                account details.
+              </p>
+            </div>
+
+            {/* Information */}
+
+            <div className="grid gap-8 px-7 py-8 sm:grid-cols-2 lg:grid-cols-3">
+              <AccountDetail
+                label="Full Name"
+                value={user.fullName}
+              />
+
+              <AccountDetail
+                label="Email Address"
+                value={user.email}
+              />
+
+              <AccountDetail
+                label="Account Role"
+                value={user.role}
+              />
+            </div>
+
+            {/* ================================= */}
+            {/* MEMBER STATUS */}
+            {/* ================================= */}
+
+            {user.role === "MEMBER" && (
+              <div className="mx-7 mb-8 rounded-2xl border border-green-200 bg-green-50 p-6">
+                <div className="flex items-start gap-4">
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-green-600 text-lg font-bold text-white">
+                    ✓
+                  </div>
+
+                  <div>
+                    <p className="text-xs font-bold uppercase tracking-[0.14em] text-green-600">
+                      Membership Status
+                    </p>
+
+                    <h3 className="mt-2 text-xl font-bold text-green-950">
+                      Official Pentatone Member
+                    </h3>
+
+                    <p className="mt-2 max-w-2xl text-sm leading-6 text-green-700">
+                      Your membership application
+                      has been approved. You are
+                      now an official member of
+                      Pentatone Musical Club.
+                    </p>
+                  </div>
                 </div>
+              </div>
+            )}
 
-                <div>
-                  <p className="text-lg font-bold text-green-900">
-                    Official Pentatone Member
+            {/* ================================= */}
+            {/* GENERAL USER — NO APPLICATION */}
+            {/* ================================= */}
+
+            {user.role === "GENERAL_USER" &&
+              !membership && (
+                <div className="mx-7 mb-8 rounded-2xl border border-red-200 bg-red-50 p-6">
+                  <p className="text-xs font-bold uppercase tracking-[0.14em] text-red-600">
+                    Club Membership
                   </p>
+
+                  <h3 className="mt-2 text-xl font-bold text-slate-900">
+                    Become an Official Member
+                  </h3>
+
+                  <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
+                    Your Pentatone account is
+                    active, but you are not an
+                    official club member yet.
+                    Submit a membership application
+                    to begin the student
+                    verification process.
+                  </p>
+
+                  <Link
+                    href="/join-club"
+                    className="mt-5 inline-flex min-h-11 items-center justify-center rounded-lg bg-red-600 px-6 text-sm font-bold text-white transition hover:bg-red-700"
+                  >
+                    Apply for Membership
+                  </Link>
+                </div>
+              )}
+
+            {/* ================================= */}
+            {/* PENDING */}
+            {/* ================================= */}
+
+            {user.role === "GENERAL_USER" &&
+              membership?.status ===
+                "PENDING" && (
+                <div className="mx-7 mb-8 rounded-2xl border border-amber-200 bg-amber-50 p-6">
+                  <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-center">
+                    <div>
+                      <p className="text-xs font-bold uppercase tracking-[0.14em] text-amber-600">
+                        Membership Application
+                      </p>
+
+                      <h3 className="mt-2 text-xl font-bold text-amber-950">
+                        Application Under Review
+                      </h3>
+
+                      <p className="mt-2 max-w-2xl text-sm leading-6 text-amber-800">
+                        Your membership application
+                        was submitted successfully
+                        and is currently waiting for
+                        review by the Pentatone
+                        administration.
+                      </p>
+                    </div>
+
+                    <div className="w-fit rounded-full border border-amber-300 bg-amber-100 px-5 py-2 text-xs font-bold uppercase tracking-[0.12em] text-amber-800">
+                      Pending
+                    </div>
+                  </div>
+
+                  <div className="mt-5 border-t border-amber-200 pt-5">
+                    <p className="text-xs font-medium text-amber-700">
+                      You do not need to submit
+                      another application while
+                      this request is being
+                      reviewed.
+                    </p>
+                  </div>
+                </div>
+              )}
+
+            {/* ================================= */}
+            {/* REJECTED */}
+            {/* ================================= */}
+
+            {user.role === "GENERAL_USER" &&
+              membership?.status ===
+                "REJECTED" && (
+                <div className="mx-7 mb-8 rounded-2xl border border-red-200 bg-red-50 p-6">
+                  <p className="text-xs font-bold uppercase tracking-[0.14em] text-red-600">
+                    Membership Application
+                  </p>
+
+                  <h3 className="mt-2 text-xl font-bold text-red-950">
+                    Application Rejected
+                  </h3>
+
+                  <p className="mt-2 max-w-2xl text-sm leading-6 text-red-700">
+                    Your previous application
+                    was not approved. Review the
+                    administrator&apos;s note,
+                    correct the information and
+                    submit a new application.
+                  </p>
+
+                  {/* Admin Note */}
+
+                  {membership.admin_note && (
+                    <div className="mt-5 rounded-xl border border-red-200 bg-white p-5">
+                      <p className="text-[10px] font-bold uppercase tracking-[0.13em] text-slate-500">
+                        Admin Note
+                      </p>
+
+                      <p className="mt-2 text-sm leading-6 text-slate-700">
+                        {
+                          membership.admin_note
+                        }
+                      </p>
+                    </div>
+                  )}
+
+                  <Link
+                    href="/join-club"
+                    className="mt-5 inline-flex min-h-11 items-center justify-center rounded-lg bg-red-600 px-6 text-sm font-bold text-white transition hover:bg-red-700"
+                  >
+                    Reapply for Membership
+                  </Link>
+                </div>
+              )}
+
+            {/* ================================= */}
+            {/* APPROVED SAFEGUARD */}
+            {/* ================================= */}
+
+            {user.role === "GENERAL_USER" &&
+              membership?.status ===
+                "APPROVED" && (
+                <div className="mx-7 mb-8 rounded-2xl border border-green-200 bg-green-50 p-6">
+                  <p className="text-xs font-bold uppercase tracking-[0.14em] text-green-600">
+                    Membership Application
+                  </p>
+
+                  <h3 className="mt-2 text-xl font-bold text-green-950">
+                    Membership Approved
+                  </h3>
 
                   <p className="mt-2 text-sm leading-6 text-green-700">
-                    Your membership application
-                    has been approved. You are
-                    now an official member of
-                    Pentatone Musical Club.
+                    Your application has been
+                    approved. Your membership
+                    account is being updated.
                   </p>
                 </div>
-              </div>
-            </div>
-          )}
-
-          {/* ========================= */}
-          {/* GENERAL USER - NO APP */}
-          {/* ========================= */}
-
-          {user.role === "GENERAL_USER" &&
-            !membership && (
-              <div className="mt-10 rounded-2xl border border-red-100 bg-red-50 p-6">
-                <p className="text-lg font-bold text-slate-900">
-                  Club Membership
-                </p>
-
-                <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
-                  Your Pentatone account is
-                  active, but you are not an
-                  official club member yet.
-                  Submit a membership
-                  application to begin the
-                  verification process.
-                </p>
-
-                <Link
-                  href="/join-club"
-                  className="mt-5 inline-flex rounded-xl bg-red-600 px-6 py-3 text-sm font-bold text-white transition hover:bg-red-700"
-                >
-                  Apply for Membership
-                </Link>
-              </div>
-            )}
-
-          {/* ========================= */}
-          {/* PENDING */}
-          {/* ========================= */}
-
-          {user.role === "GENERAL_USER" &&
-            membership?.status ===
-              "PENDING" && (
-              <div className="mt-10 rounded-2xl border border-amber-200 bg-amber-50 p-6">
-                <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-center">
-                  <div>
-                    <p className="text-xs font-bold uppercase tracking-[0.16em] text-amber-600">
-                      Membership Application
-                    </p>
-
-                    <h2 className="mt-2 text-xl font-bold text-amber-950">
-                      Application Under Review
-                    </h2>
-
-                    <p className="mt-2 max-w-2xl text-sm leading-6 text-amber-800">
-                      Your membership application
-                      has been submitted
-                      successfully and is currently
-                      waiting for review by the
-                      Pentatone administration.
-                    </p>
-                  </div>
-
-                  <div className="w-fit rounded-full border border-amber-300 bg-amber-100 px-5 py-2 text-xs font-bold uppercase tracking-[0.12em] text-amber-800">
-                    Pending
-                  </div>
-                </div>
-
-                <div className="mt-5 border-t border-amber-200 pt-5">
-                  <p className="text-xs text-amber-700">
-                    You do not need to submit
-                    another application.
-                  </p>
-                </div>
-              </div>
-            )}
-
-          {/* ========================= */}
-          {/* REJECTED */}
-          {/* ========================= */}
-
-          {user.role === "GENERAL_USER" &&
-            membership?.status ===
-              "REJECTED" && (
-              <div className="mt-10 rounded-2xl border border-red-200 bg-red-50 p-6">
-                <p className="text-xs font-bold uppercase tracking-[0.16em] text-red-600">
-                  Membership Application
-                </p>
-
-                <h2 className="mt-2 text-xl font-bold text-red-900">
-                  Application Rejected
-                </h2>
-
-                <p className="mt-2 text-sm leading-6 text-red-700">
-                  Your previous membership
-                  application was not approved.
-                  You can correct the information
-                  and submit a new application.
-                </p>
-
-                {membership.admin_note && (
-                  <div className="mt-5 rounded-xl border border-red-200 bg-white p-4">
-                    <p className="text-xs font-bold uppercase tracking-[0.1em] text-slate-500">
-                      Admin Note
-                    </p>
-
-                    <p className="mt-2 text-sm text-slate-700">
-                      {
-                        membership.admin_note
-                      }
-                    </p>
-                  </div>
-                )}
-
-                <Link
-                  href="/join-club"
-                  className="mt-5 inline-flex rounded-xl bg-red-600 px-6 py-3 text-sm font-bold text-white transition hover:bg-red-700"
-                >
-                  Reapply for Membership
-                </Link>
-              </div>
-            )}
-
-          {/* APPROVED but role not updated safeguard */}
-
-          {user.role === "GENERAL_USER" &&
-            membership?.status ===
-              "APPROVED" && (
-              <div className="mt-10 rounded-2xl border border-green-200 bg-green-50 p-6">
-                <p className="text-lg font-bold text-green-900">
-                  Membership Approved
-                </p>
-
-                <p className="mt-2 text-sm text-green-700">
-                  Your application has been
-                  approved. Your membership role
-                  is being updated.
-                </p>
-              </div>
-            )}
+              )}
+          </section>
         </div>
-      </div>
-    </main>
+      </main>
+
+      {/* ================================= */}
+      {/* SHARED FOOTER */}
+      {/* ================================= */}
+
+      <Footer />
+    </>
+  );
+}
+
+/*
+ * =================================
+ * ACCOUNT DETAIL
+ * =================================
+ */
+
+function AccountDetail({
+  label,
+  value,
+}: {
+  label: string;
+  value: string;
+}) {
+  return (
+    <div>
+      <p className="text-[10px] font-bold uppercase tracking-[0.13em] text-slate-400">
+        {label}
+      </p>
+
+      <p className="mt-2 break-words text-base font-semibold text-slate-900">
+        {value}
+      </p>
+    </div>
   );
 }

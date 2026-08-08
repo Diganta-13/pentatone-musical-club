@@ -1,24 +1,27 @@
 import Link from "next/link";
-import { Mail, MapPin, Music2 } from "lucide-react";
-import { Playfair_Display } from "next/font/google";
 
-const playfair = Playfair_Display({
-  subsets: ["latin"],
-  weight: ["600", "700"],
-});
+import {
+  Mail,
+  MapPin,
+} from "lucide-react";
 
 const quickLinks = [
-  { label: "Home", href: "/" },
-  { label: "About Us", href: "/about" },
-  { label: "Events", href: "/events" },
-  { label: "Auditions", href: "/auditions" },
-];
-
-const resourceLinks = [
-  { label: "Gallery", href: "/gallery" },
-  { label: "Practice Materials", href: "/resources" },
-  { label: "Contact", href: "/contact" },
-  { label: "Support", href: "/contact" },
+  {
+    label: "Home",
+    href: "/",
+  },
+  {
+    label: "About Us",
+    href: "/about",
+  },
+  {
+    label: "Events",
+    href: "/events",
+  },
+  {
+    label: "Auditions",
+    href: "/auditions",
+  },
 ];
 
 function FacebookIcon() {
@@ -43,8 +46,20 @@ function InstagramIcon() {
       strokeLinecap="round"
       strokeLinejoin="round"
     >
-      <rect x="3" y="3" width="18" height="18" rx="5" />
-      <circle cx="12" cy="12" r="4" />
+      <rect
+        x="3"
+        y="3"
+        width="18"
+        height="18"
+        rx="5"
+      />
+
+      <circle
+        cx="12"
+        cy="12"
+        r="4"
+      />
+
       <circle
         cx="17.5"
         cy="6.5"
@@ -60,82 +75,107 @@ export default function Footer() {
     <footer className="bg-[#273142] text-white">
       <div className="mx-auto max-w-[1500px] px-5 py-16 sm:px-8 lg:px-12 lg:py-20 xl:px-20">
         <div className="grid gap-12 sm:grid-cols-2 lg:grid-cols-[1.3fr_0.8fr_0.9fr_1.2fr]">
-          {/* Club information */}
-          <div>
-            <Link
-              href="/"
-              className={`${playfair.className} inline-flex items-center gap-3 text-3xl font-bold text-[#ed0000]`}
-            >
-              <Music2 className="h-8 w-8" strokeWidth={1.8} />
-              Pentatone
-            </Link>
+          {/* Description */}
 
-            <p className="mt-5 max-w-sm text-sm leading-7 text-slate-300">
-              Amplifying talent and fostering musical excellence at Sylhet
-              Engineering College. A community for musicians, performers,
-              and music lovers.
+          <div>
+            <p className="max-w-sm text-sm leading-7 text-slate-300">
+              Amplifying talent and
+              fostering musical excellence
+              at Sylhet Engineering College.
+              A community for musicians,
+              performers, and music lovers.
             </p>
 
-            <div className="mt-7 flex items-center gap-3">
-              <a
-                href="#"
-                aria-label="Pentatone Facebook"
-                className="flex h-11 w-11 items-center justify-center rounded-full bg-white/10 text-white transition duration-300 hover:-translate-y-1 hover:bg-[#ed0000]"
-              >
-                <FacebookIcon />
-              </a>
+            {/* Visual social icons.
+                Real social URLs can be connected later. */}
 
-              <a
-                href="#"
-                aria-label="Pentatone Instagram"
-                className="flex h-11 w-11 items-center justify-center rounded-full bg-white/10 text-white transition duration-300 hover:-translate-y-1 hover:bg-[#ed0000]"
-              >
+            <div className="mt-7 flex items-center gap-3">
+              <span className="flex h-11 w-11 items-center justify-center rounded-full bg-white/10 text-white">
+                <FacebookIcon />
+              </span>
+
+              <span className="flex h-11 w-11 items-center justify-center rounded-full bg-white/10 text-white">
                 <InstagramIcon />
-              </a>
+              </span>
             </div>
           </div>
 
           {/* Quick links */}
+
           <div>
             <h3 className="text-sm font-bold uppercase tracking-wider text-white">
               Quick Links
             </h3>
 
             <ul className="mt-6 space-y-4">
-              {quickLinks.map((link) => (
-                <li key={link.label}>
-                  <Link
-                    href={link.href}
-                    className="text-sm text-slate-300 transition hover:text-[#ed0000]"
+              {quickLinks.map(
+                (link) => (
+                  <li
+                    key={
+                      link.label
+                    }
                   >
-                    {link.label}
-                  </Link>
-                </li>
-              ))}
+                    <Link
+                      href={
+                        link.href
+                      }
+                      className="text-sm text-slate-300 transition hover:text-[#ed0000]"
+                    >
+                      {
+                        link.label
+                      }
+                    </Link>
+                  </li>
+                ),
+              )}
             </ul>
           </div>
 
           {/* Resources */}
+
           <div>
             <h3 className="text-sm font-bold uppercase tracking-wider text-white">
               Resources
             </h3>
 
             <ul className="mt-6 space-y-4">
-              {resourceLinks.map((link) => (
-                <li key={link.label}>
-                  <Link
-                    href={link.href}
-                    className="text-sm text-slate-300 transition hover:text-[#ed0000]"
-                  >
-                    {link.label}
-                  </Link>
-                </li>
-              ))}
+              <li>
+                <Link
+                  href="/gallery"
+                  className="text-sm text-slate-300 transition hover:text-[#ed0000]"
+                >
+                  Gallery
+                </Link>
+              </li>
+
+              <li>
+                <span className="text-sm text-slate-400">
+                  Practice Materials
+                </span>
+              </li>
+
+              <li>
+                <a
+                  href="mailto:pentatone.sec@gmail.com"
+                  className="text-sm text-slate-300 transition hover:text-[#ed0000]"
+                >
+                  Contact
+                </a>
+              </li>
+
+              <li>
+                <a
+                  href="mailto:pentatone.sec@gmail.com"
+                  className="text-sm text-slate-300 transition hover:text-[#ed0000]"
+                >
+                  Support
+                </a>
+              </li>
             </ul>
           </div>
 
-          {/* Campus information */}
+          {/* Campus */}
+
           <div>
             <h3 className="text-sm font-bold uppercase tracking-wider text-white">
               Campus
@@ -145,13 +185,17 @@ export default function Footer() {
               <div className="flex items-start gap-3">
                 <MapPin
                   className="mt-1 h-5 w-5 shrink-0 text-[#ed0000]"
-                  strokeWidth={1.8}
+                  strokeWidth={
+                    1.8
+                  }
                 />
 
                 <p className="text-sm leading-7 text-slate-300">
-                  Sylhet Engineering College
+                  Sylhet Engineering
+                  College
                   <br />
-                  Tilagor, Sylhet-3100
+                  Tilagor,
+                  Sylhet-3100
                   <br />
                   Bangladesh
                 </p>
@@ -160,7 +204,9 @@ export default function Footer() {
               <div className="flex items-center gap-3">
                 <Mail
                   className="h-5 w-5 shrink-0 text-[#ed0000]"
-                  strokeWidth={1.8}
+                  strokeWidth={
+                    1.8
+                  }
                 />
 
                 <a
@@ -174,11 +220,12 @@ export default function Footer() {
           </div>
         </div>
 
-        {/* Copyright */}
         <div className="mt-14 border-t border-white/10 pt-7 text-center">
           <p className="text-sm text-slate-400">
-            © 2026 Pentatone Musical Club, Sylhet Engineering College. All
-            rights reserved.
+            © 2026 Pentatone Musical
+            Club, Sylhet Engineering
+            College. All rights
+            reserved.
           </p>
         </div>
       </div>

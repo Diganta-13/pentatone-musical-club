@@ -5,10 +5,7 @@ import type { RowDataPacket } from "mysql2";
 
 import {
   CalendarDays,
-  Clock3,
-  FolderOpen,
   Images,
-  Megaphone,
   Mic2,
   UserRoundPlus,
   UsersRound,

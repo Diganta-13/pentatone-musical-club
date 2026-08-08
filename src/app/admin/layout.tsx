@@ -1,89 +1,73 @@
-import { cookies } from "next/headers";
+import type { ReactNode } from "react";
 import { redirect } from "next/navigation";
-import type { RowDataPacket } from "mysql2";
 
 import AdminHeader from "@/components/admin/admin-header";
 import AdminSidebar from "@/components/admin/admin-sidebar";
+import Footer from "@/components/layout/footer";
 
-import db from "@/lib/db";
+import { getCurrentUser } from "@/lib/current-user";
 
-import {
-  SESSION_COOKIE_NAME,
-  verifySessionToken,
-} from "@/lib/auth";
-
-interface AdminRow extends RowDataPacket {
-  id: number;
-  full_name: string;
-  email: string;
-  role: string;
-  is_active: number | boolean;
-}
+type AdminLayoutProps = {
+  children: ReactNode;
+};
 
 export default async function AdminLayout({
   children,
-}: {
-  children: React.ReactNode;
-}) {
-  const cookieStore = await cookies();
+}: AdminLayoutProps) {
+  /*
+   * ==============================
+   * CURRENT AUTHENTICATED USER
+   * ==============================
+   */
 
-  const token = cookieStore.get(
-    SESSION_COOKIE_NAME,
-  )?.value;
+  const user = await getCurrentUser();
 
-  if (!token) {
+  /*
+   * No valid session
+   */
+
+  if (!user) {
     redirect("/login");
   }
 
-  const session =
-    await verifySessionToken(token);
+  /*
+   * Only ADMIN can access /admin
+   */
 
-  if (!session) {
-    redirect("/login");
-  }
-
-  const [users] =
-    await db.execute<AdminRow[]>(
-      `
-        SELECT
-          u.id,
-          u.full_name,
-          u.email,
-          u.is_active,
-          r.name AS role
-        FROM users u
-        INNER JOIN roles r
-          ON r.id = u.role_id
-        WHERE u.id = ?
-        LIMIT 1
-      `,
-      [session.userId],
-    );
-
-  if (users.length === 0) {
-    redirect("/login");
-  }
-
-  const admin = users[0];
-
-  if (!admin.is_active) {
-    redirect("/login");
-  }
-
-  if (admin.role !== "ADMIN") {
+  if (user.role !== "ADMIN") {
     redirect("/dashboard");
   }
 
   return (
     <div className="min-h-screen bg-[#f6f7fc]">
+      {/* ============================== */}
+      {/* FIXED ADMIN SIDEBAR */}
+      {/* ============================== */}
+
       <AdminSidebar />
 
-      <div className="min-h-screen lg:ml-[250px]">
+      {/* ============================== */}
+      {/* ADMIN CONTENT AREA */}
+      {/* ============================== */}
+
+      <div className="flex min-h-screen flex-col lg:ml-[250px]">
+        {/* Admin Header */}
+
         <AdminHeader
-          fullName={admin.full_name}
+          fullName={user.fullName}
         />
 
-        {children}
+        {/* Page Content */}
+
+        <div className="flex-1">
+          {children}
+        </div>
+
+        {/* ============================== */}
+        {/* SAME GLOBAL FOOTER */}
+        {/* ============================== */}
+
+        <Footer />
       </div>
     </div>
   );

@@ -1,126 +1,80 @@
 import Link from "next/link";
-import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
 import type { RowDataPacket } from "mysql2";
 
+import BrandLogo from "@/components/layout/brand-logo";
+import Footer from "@/components/layout/footer";
 import MembershipForm from "@/components/membership/membership-form";
 
+import { getCurrentUser } from "@/lib/current-user";
 import db from "@/lib/db";
 
-import {
-  SESSION_COOKIE_NAME,
-  verifySessionToken,
-} from "@/lib/auth";
-
-interface UserRow
-  extends RowDataPacket {
-  id: number;
-  full_name: string;
-  email: string;
-  role: string;
-  is_active: number | boolean;
-}
-
-interface DepartmentRow
-  extends RowDataPacket {
+interface DepartmentRow extends RowDataPacket {
   id: number;
   name: string;
   short_name: string;
 }
 
-interface MembershipRow
-  extends RowDataPacket {
+interface MembershipRow extends RowDataPacket {
   id: number;
-
   status:
     | "PENDING"
     | "APPROVED"
     | "REJECTED";
-
   admin_note: string | null;
 }
 
 export default async function JoinClubPage() {
   /*
-   * Authentication
+   * ==============================
+   * CURRENT USER
+   * ==============================
    */
 
-  const cookieStore =
-    await cookies();
+  const user = await getCurrentUser();
 
-  const token = cookieStore.get(
-    SESSION_COOKIE_NAME,
-  )?.value;
-
-  if (!token) {
-    redirect("/login");
-  }
-
-  const session =
-    await verifySessionToken(token);
-
-  if (!session) {
+  if (!user) {
     redirect("/login");
   }
 
   /*
-   * Always get current role
-   * from database.
+   * Admin users use the admin portal.
    */
-
-  const [users] =
-    await db.execute<UserRow[]>(
-      `
-        SELECT
-          u.id,
-          u.full_name,
-          u.email,
-          u.is_active,
-          r.name AS role
-        FROM users u
-        INNER JOIN roles r
-          ON r.id = u.role_id
-        WHERE u.id = ?
-        LIMIT 1
-      `,
-      [session.userId],
-    );
-
-  if (users.length === 0) {
-    redirect("/login");
-  }
-
-  const user = users[0];
-
-  if (!user.is_active) {
-    redirect("/login");
-  }
 
   if (user.role === "ADMIN") {
     redirect("/admin");
   }
+
+  /*
+   * Existing official members do not
+   * need to submit another application.
+   */
 
   if (user.role === "MEMBER") {
     redirect("/dashboard");
   }
 
   /*
-   * Get previous/latest application
+   * ==============================
+   * LATEST MEMBERSHIP APPLICATION
+   * ==============================
    */
 
   const [applications] =
-    await db.execute<
-      MembershipRow[]
-    >(
+    await db.execute<MembershipRow[]>(
       `
         SELECT
           id,
           status,
           admin_note
+
         FROM membership_requests
+
         WHERE user_id = ?
+
         ORDER BY created_at DESC
+
         LIMIT 1
       `,
       [user.id],
@@ -132,19 +86,38 @@ export default async function JoinClubPage() {
       : null;
 
   /*
-   * Departments
+   * Approved application safeguard.
+   *
+   * Normally approval also changes the
+   * user role to MEMBER. If for any
+   * reason an approved request exists
+   * before the role is reflected,
+   * return the user to the dashboard.
+   */
+
+  if (
+    latestApplication?.status ===
+    "APPROVED"
+  ) {
+    redirect("/dashboard");
+  }
+
+  /*
+   * ==============================
+   * DEPARTMENTS
+   * ==============================
    */
 
   const [departmentRows] =
-    await db.execute<
-      DepartmentRow[]
-    >(
+    await db.execute<DepartmentRow[]>(
       `
         SELECT
           id,
           name,
           short_name
+
         FROM departments
+
         ORDER BY name ASC
       `,
     );
@@ -160,164 +133,244 @@ export default async function JoinClubPage() {
     );
 
   return (
-    <main className="min-h-screen bg-[#f7f8ff]">
-      {/* Header */}
+    <>
+      <main className="min-h-screen bg-[#f7f8ff]">
+        {/* ============================== */}
+        {/* HEADER */}
+        {/* ============================== */}
 
-      <header className="border-b border-slate-200 bg-white">
-        <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-6 lg:px-8">
-          <Link
-            href="/"
-            className="text-2xl font-extrabold tracking-tight text-red-600"
-          >
-            Pentatone
-          </Link>
+        <header className="border-b border-slate-200 bg-white">
+          <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-6 lg:px-8">
+            {/* Same official landing-page logo */}
 
-          <Link
-            href="/dashboard"
-            className="text-sm font-bold text-slate-600 transition hover:text-red-600"
-          >
-            Back to Dashboard
-          </Link>
-        </div>
-      </header>
-
-      <div className="grid lg:grid-cols-[0.85fr_1.15fr]">
-        {/* LEFT */}
-
-        <section className="relative hidden min-h-[1100px] overflow-hidden bg-[#32151c] lg:block">
-          <div
-            className="absolute inset-0 bg-cover bg-center"
-            style={{
-              backgroundImage:
-                "url('/assets/images/register-hero.jpeg')",
-            }}
-          />
-
-          <div className="absolute inset-0 bg-[#25070d]/55" />
-
-          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#21070d]/35 to-[#100205]/80" />
-
-          <div className="relative z-10 flex min-h-[1100px] flex-col justify-between px-14 py-20 xl:px-20">
-            <div>
-              <div className="flex items-center gap-5">
-                <span className="h-1 w-16 bg-red-600" />
-
-                <p className="text-sm font-bold uppercase tracking-[0.18em] text-white">
-                  Sylhet Engineering College
-                </p>
-              </div>
-
-              <h1 className="mt-10 text-6xl font-extrabold tracking-tight text-white">
-                Join The Club
-              </h1>
-
-              <p className="mt-7 max-w-xl text-xl leading-9 text-white">
-                Take the next step toward
-                becoming an official member
-                of Pentatone Musical Club.
-              </p>
-
-              <div className="mt-12 h-px w-32 bg-red-600" />
-
-              <div className="mt-10 space-y-5">
-                <Step
-                  number="01"
-                  title="Submit Application"
-                  description="Provide your academic and musical information."
-                />
-
-                <Step
-                  number="02"
-                  title="Student Verification"
-                  description="Upload a valid SEC student document."
-                />
-
-                <Step
-                  number="03"
-                  title="Admin Review"
-                  description="Pentatone administration reviews the application."
-                />
-
-                <Step
-                  number="04"
-                  title="Become A Member"
-                  description="Approved applicants receive official MEMBER status."
-                />
-              </div>
-            </div>
-
-            <div className="rounded-2xl border border-white/20 bg-white/10 p-6 backdrop-blur-sm">
-              <p className="text-xs font-bold uppercase tracking-[0.16em] text-red-400">
-                Applying As
-              </p>
-
-              <p className="mt-3 text-xl font-bold text-white">
-                {user.full_name}
-              </p>
-
-              <p className="mt-1 text-sm text-white/70">
-                {user.email}
-              </p>
-            </div>
-          </div>
-        </section>
-
-        {/* RIGHT */}
-
-        <section className="px-6 py-14 sm:px-10 lg:px-14 xl:px-20">
-          {latestApplication?.status ===
-          "PENDING" ? (
-            <div className="mx-auto max-w-2xl">
-              <p className="text-sm font-bold uppercase tracking-[0.2em] text-amber-600">
-                Application Submitted
-              </p>
-
-              <h2 className="mt-3 text-4xl font-extrabold text-slate-900">
-                Application Under Review
-              </h2>
-
-              <div className="mt-8 rounded-2xl border border-amber-200 bg-amber-50 p-7">
-                <p className="text-lg font-bold text-amber-900">
-                  Membership Status:
-                  PENDING
-                </p>
-
-                <p className="mt-3 leading-7 text-amber-800">
-                  Your membership application
-                  has been submitted
-                  successfully and is waiting
-                  for review by the Pentatone
-                  administration.
-                </p>
-              </div>
-
-              <Link
-                href="/dashboard"
-                className="mt-7 inline-flex rounded-xl bg-slate-900 px-6 py-3 text-sm font-bold text-white"
-              >
-                Return to Dashboard
-              </Link>
-            </div>
-          ) : (
-            <MembershipForm
-              fullName={user.full_name}
-              email={user.email}
-              departments={
-                departments
-              }
-              previousRejectionNote={
-                latestApplication?.status ===
-                "REJECTED"
-                  ? latestApplication.admin_note
-                  : null
-              }
+            <BrandLogo
+              priority
+              className="h-12"
             />
-          )}
-        </section>
-      </div>
-    </main>
+
+            <Link
+              href="/dashboard"
+              className="text-sm font-bold text-slate-600 transition hover:text-red-600"
+            >
+              Back to Dashboard
+            </Link>
+          </div>
+        </header>
+
+        {/* ============================== */}
+        {/* PAGE CONTENT */}
+        {/* ============================== */}
+
+        <div className="grid lg:grid-cols-[0.85fr_1.15fr]">
+          {/* ============================== */}
+          {/* LEFT BRANDING SECTION */}
+          {/* ============================== */}
+
+          <section className="relative hidden min-h-[1100px] overflow-hidden bg-[#32151c] lg:block">
+            {/* Background */}
+
+            <div
+              className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+              style={{
+                backgroundImage:
+                  "url('/assets/images/register-hero.jpeg')",
+              }}
+            />
+
+            {/* Dark overlays */}
+
+            <div className="absolute inset-0 bg-[#25070d]/55" />
+
+            <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#21070d]/35 to-[#100205]/80" />
+
+            {/* Content */}
+
+            <div className="relative z-10 flex min-h-[1100px] flex-col justify-between px-14 py-20 xl:px-20">
+              <div>
+                {/* College */}
+
+                <div className="flex items-center gap-5">
+                  <span className="h-1 w-16 bg-red-600" />
+
+                  <p className="text-sm font-bold uppercase tracking-[0.18em] text-white">
+                    Sylhet Engineering College
+                  </p>
+                </div>
+
+                {/* Heading */}
+
+                <h1 className="mt-10 text-6xl font-extrabold tracking-tight text-white">
+                  Join The Club
+                </h1>
+
+                <p className="mt-7 max-w-xl text-xl leading-9 text-white">
+                  Take the next step toward
+                  becoming an official member
+                  of Pentatone Musical Club.
+                </p>
+
+                <div className="mt-12 h-px w-32 bg-red-600" />
+
+                {/* Membership Process */}
+
+                <div className="mt-10 space-y-5">
+                  <Step
+                    number="01"
+                    title="Submit Application"
+                    description="Provide your academic and musical information."
+                  />
+
+                  <Step
+                    number="02"
+                    title="Student Verification"
+                    description="Upload a valid SEC student document as verification proof."
+                  />
+
+                  <Step
+                    number="03"
+                    title="Admin Review"
+                    description="Pentatone administration reviews your submitted information and proof."
+                  />
+
+                  <Step
+                    number="04"
+                    title="Become A Member"
+                    description="Approved applicants receive official MEMBER status."
+                  />
+                </div>
+              </div>
+
+              {/* Current Account */}
+
+              <div className="rounded-2xl border border-white/20 bg-white/10 p-6 backdrop-blur-sm">
+                <p className="text-xs font-bold uppercase tracking-[0.16em] text-red-400">
+                  Applying As
+                </p>
+
+                <p className="mt-3 text-xl font-bold text-white">
+                  {user.fullName}
+                </p>
+
+                <p className="mt-1 break-all text-sm text-white/70">
+                  {user.email}
+                </p>
+
+                <div className="mt-5 border-t border-white/10 pt-5">
+                  <p className="text-xs font-semibold uppercase tracking-[0.12em] text-white/50">
+                    Current Account
+                  </p>
+
+                  <p className="mt-2 text-sm font-bold text-white">
+                    General User
+                  </p>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* ============================== */}
+          {/* RIGHT FORM / STATUS */}
+          {/* ============================== */}
+
+          <section className="min-h-[850px] px-6 py-14 sm:px-10 lg:px-14 xl:px-20">
+            {/* ============================== */}
+            {/* PENDING APPLICATION */}
+            {/* ============================== */}
+
+            {latestApplication?.status ===
+            "PENDING" ? (
+              <div className="mx-auto max-w-2xl">
+                <div className="flex items-center gap-4">
+                  <span className="h-[3px] w-10 bg-amber-500" />
+
+                  <p className="text-sm font-bold uppercase tracking-[0.2em] text-amber-600">
+                    Application Submitted
+                  </p>
+                </div>
+
+                <h2 className="mt-4 text-4xl font-extrabold tracking-tight text-slate-900 md:text-5xl">
+                  Application Under Review
+                </h2>
+
+                <p className="mt-5 max-w-xl text-sm leading-7 text-slate-600">
+                  Your application has already
+                  been submitted. Pentatone
+                  administration will review
+                  your information and student
+                  verification document.
+                </p>
+
+                {/* Status Card */}
+
+                <div className="mt-8 rounded-2xl border border-amber-200 bg-amber-50 p-7">
+                  <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-center">
+                    <div>
+                      <p className="text-xs font-bold uppercase tracking-[0.14em] text-amber-600">
+                        Membership Status
+                      </p>
+
+                      <h3 className="mt-2 text-xl font-bold text-amber-950">
+                        Waiting For Admin Review
+                      </h3>
+                    </div>
+
+                    <div className="w-fit rounded-full border border-amber-300 bg-amber-100 px-5 py-2 text-xs font-bold uppercase tracking-[0.12em] text-amber-800">
+                      Pending
+                    </div>
+                  </div>
+
+                  <p className="mt-5 border-t border-amber-200 pt-5 text-sm leading-7 text-amber-800">
+                    You do not need to submit
+                    another membership
+                    application while this
+                    request is being reviewed.
+                  </p>
+                </div>
+
+                <Link
+                  href="/dashboard"
+                  className="mt-7 inline-flex min-h-12 items-center justify-center rounded-xl bg-slate-900 px-7 text-sm font-bold text-white transition hover:bg-red-600"
+                >
+                  Return to Dashboard
+                </Link>
+              </div>
+            ) : (
+              /*
+               * ==============================
+               * NEW / REAPPLICATION FORM
+               * ==============================
+               */
+
+              <MembershipForm
+                fullName={user.fullName}
+                email={user.email}
+                departments={departments}
+                previousRejectionNote={
+                  latestApplication?.status ===
+                  "REJECTED"
+                    ? latestApplication.admin_note
+                    : null
+                }
+              />
+            )}
+          </section>
+        </div>
+      </main>
+
+      {/* ============================== */}
+      {/* SAME GLOBAL FOOTER */}
+      {/* ============================== */}
+
+      <Footer />
+    </>
   );
 }
+
+/*
+ * ==============================
+ * MEMBERSHIP PROCESS STEP
+ * ==============================
+ */
 
 function Step({
   number,
@@ -339,7 +392,7 @@ function Step({
           {title}
         </p>
 
-        <p className="mt-1 text-sm leading-6 text-white/70">
+        <p className="mt-1 max-w-md text-sm leading-6 text-white/70">
           {description}
         </p>
       </div>
