@@ -1,13 +1,33 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Eye, EyeOff } from "lucide-react";
 import { useState, type FormEvent } from "react";
 
-export default function LoginForm() {
-  const [showPassword, setShowPassword] = useState(false);
+type LoginFormProps = {
+  registered?: boolean;
+};
+
+export default function LoginForm({
+  registered = false,
+}: LoginFormProps) {
+  const router = useRouter();
+
+  const [showPassword, setShowPassword] =
+    useState(false);
+
   const [error, setError] = useState("");
-  const [successMessage, setSuccessMessage] = useState("");
+
+  const [successMessage, setSuccessMessage] =
+    useState(
+      registered
+        ? "Account created successfully. You can now log in."
+        : "",
+    );
+
+  const [isSubmitting, setIsSubmitting] =
+    useState(false);
 
   const inputClass =
     "h-14 w-full border border-transparent bg-[#eef1ff] px-5 text-sm text-slate-900 outline-none transition placeholder:text-slate-500 focus:border-red-500 focus:bg-white focus:ring-4 focus:ring-red-100";
@@ -15,52 +35,108 @@ export default function LoginForm() {
   const labelClass =
     "mb-2 block text-xs font-bold uppercase tracking-[0.08em] text-slate-800";
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(
+    event: FormEvent<HTMLFormElement>,
+  ) {
     event.preventDefault();
+
+    if (isSubmitting) return;
 
     setError("");
     setSuccessMessage("");
 
-    const formData = new FormData(event.currentTarget);
+    const formData = new FormData(
+      event.currentTarget,
+    );
 
-    const email = String(formData.get("email") || "").trim();
-    const password = String(formData.get("password") || "");
+    const email = String(
+      formData.get("email") || "",
+    )
+      .trim()
+      .toLowerCase();
 
-    if (!email) {
-      setError("Please enter your email address.");
-      return;
-    }
+    const password = String(
+      formData.get("password") || "",
+    );
 
-    if (!email.includes("@")) {
-      setError("Please enter a valid email address.");
-      return;
-    }
+    const rememberMe =
+      formData.get("rememberMe") === "on";
 
-    if (!password) {
-      setError("Please enter your password.");
+    if (!email || !email.includes("@")) {
+      setError(
+        "Please enter a valid email address.",
+      );
       return;
     }
 
     if (password.length < 8) {
-      setError("Password must contain at least 8 characters.");
+      setError(
+        "Password must contain at least 8 characters.",
+      );
       return;
     }
 
-    setSuccessMessage(
-      "Login validation successful. Authentication will be connected later.",
-    );
+    try {
+      setIsSubmitting(true);
+
+      const response = await fetch(
+        "/api/auth/login",
+        {
+          method: "POST",
+
+          headers: {
+            "Content-Type": "application/json",
+          },
+
+          body: JSON.stringify({
+            email,
+            password,
+            rememberMe,
+          }),
+        },
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setError(
+          data.message ||
+            "Unable to sign in.",
+        );
+        return;
+      }
+
+      setSuccessMessage(
+        "Login successful. Redirecting...",
+      );
+
+      setTimeout(() => {
+        if (data.user?.role === "ADMIN") {
+          router.push("/admin");
+        } else {
+          router.push("/dashboard");
+        }
+
+        router.refresh();
+      }, 700);
+    } catch {
+      setError(
+        "Unable to connect to the server. Please try again.",
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   function handleGoogleLogin() {
-    setError("");
-    setSuccessMessage(
-      "Google authentication will be connected with the backend later.",
+    setSuccessMessage("");
+    setError(
+      "Google sign-in will be connected next.",
     );
   }
 
   return (
-    <div className="w-full max-w-[470px] border-t-4 border-[#d40000] bg-white px-12 py-12 shadow-[0_20px_50px_rgba(15,23,42,0.12)]">
-      {/* Heading */}
+    <div className="w-full max-w-[470px] border-t-4 border-[#d40000] bg-white px-8 py-10 shadow-[0_20px_50px_rgba(15,23,42,0.12)] sm:px-12 sm:py-12">
       <div>
         <h1 className="text-4xl font-extrabold tracking-tight text-[#111827]">
           Welcome Back
@@ -71,11 +147,15 @@ export default function LoginForm() {
         </p>
       </div>
 
-      {/* Login form */}
-      <form onSubmit={handleSubmit} className="mt-10">
-        {/* Email */}
+      <form
+        onSubmit={handleSubmit}
+        className="mt-10"
+      >
         <div>
-          <label htmlFor="email" className={labelClass}>
+          <label
+            htmlFor="email"
+            className={labelClass}
+          >
             Email Address
           </label>
 
@@ -83,14 +163,14 @@ export default function LoginForm() {
             id="email"
             name="email"
             type="email"
-            placeholder="name@sec.ac.bd"
+            placeholder="Enter your email address"
             autoComplete="email"
             required
+            disabled={isSubmitting}
             className={inputClass}
           />
         </div>
 
-        {/* Password */}
         <div className="mt-6">
           <div className="mb-2 flex items-center justify-between">
             <label
@@ -112,18 +192,31 @@ export default function LoginForm() {
             <input
               id="password"
               name="password"
-              type={showPassword ? "text" : "password"}
+              type={
+                showPassword
+                  ? "text"
+                  : "password"
+              }
               placeholder="Enter your password"
               autoComplete="current-password"
               required
               minLength={8}
+              disabled={isSubmitting}
               className={`${inputClass} pr-14`}
             />
 
             <button
               type="button"
-              onClick={() => setShowPassword((current) => !current)}
-              aria-label={showPassword ? "Hide password" : "Show password"}
+              onClick={() =>
+                setShowPassword(
+                  (current) => !current,
+                )
+              }
+              aria-label={
+                showPassword
+                  ? "Hide password"
+                  : "Show password"
+              }
               className="absolute top-1/2 right-4 -translate-y-1/2 text-slate-500 transition hover:text-red-600"
             >
               {showPassword ? (
@@ -135,18 +228,17 @@ export default function LoginForm() {
           </div>
         </div>
 
-        {/* Remember me */}
         <label className="mt-6 flex w-fit cursor-pointer items-center gap-3 text-sm text-slate-600">
           <input
             type="checkbox"
             name="rememberMe"
-            className="h-5 w-5 cursor-pointer border-red-300 accent-red-600"
+            disabled={isSubmitting}
+            className="h-5 w-5 cursor-pointer accent-red-600"
           />
 
           <span>Remember me for 30 days</span>
         </label>
 
-        {/* Error message */}
         {error && (
           <div
             role="alert"
@@ -156,7 +248,6 @@ export default function LoginForm() {
           </div>
         )}
 
-        {/* Success message */}
         {successMessage && (
           <div
             role="status"
@@ -166,15 +257,16 @@ export default function LoginForm() {
           </div>
         )}
 
-        {/* Login button */}
         <button
           type="submit"
-          className="mt-7 flex h-14 w-full items-center justify-center bg-[#d40000] px-6 text-sm font-bold uppercase tracking-[0.14em] text-white transition duration-300 hover:bg-red-700"
+          disabled={isSubmitting}
+          className="mt-7 flex h-14 w-full items-center justify-center bg-[#d40000] px-6 text-sm font-bold uppercase tracking-[0.14em] text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
         >
-          Login to Account
+          {isSubmitting
+            ? "Signing In..."
+            : "Login to Account"}
         </button>
 
-        {/* Divider */}
         <div className="my-8 flex items-center gap-4">
           <span className="h-px flex-1 bg-red-100" />
 
@@ -185,24 +277,23 @@ export default function LoginForm() {
           <span className="h-px flex-1 bg-red-100" />
         </div>
 
-        {/* Google button */}
         <button
           type="button"
           onClick={handleGoogleLogin}
-          className="flex h-14 w-full items-center justify-center gap-3 border-2 border-slate-900 bg-white px-6 text-sm font-bold uppercase tracking-[0.12em] text-slate-900 transition hover:border-red-600 hover:text-red-600"
+          disabled={isSubmitting}
+          className="flex h-14 w-full items-center justify-center gap-3 border-2 border-slate-900 bg-white px-6 text-sm font-bold uppercase tracking-[0.12em] text-slate-900 transition hover:border-red-600 hover:text-red-600 disabled:opacity-60"
         >
           <GoogleIcon />
           Continue with Google
         </button>
 
-        {/* Registration link */}
         <p className="mt-8 text-center text-sm text-slate-600">
           Don&apos;t have an account?{" "}
           <Link
             href="/register"
             className="font-bold text-red-600 transition hover:text-red-700"
           >
-            Join Pentatone
+            Create Account
           </Link>
         </p>
       </form>
