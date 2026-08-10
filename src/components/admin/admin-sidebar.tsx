@@ -31,7 +31,7 @@ const menuItems = [
     label: "Members",
     href: "/admin/members",
     icon: UsersRound,
-    enabled: false,
+    enabled: true,
   },
   {
     label: "Requests",
