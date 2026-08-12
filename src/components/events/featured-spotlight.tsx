@@ -1,20 +1,175 @@
 import Image from "next/image";
 import Link from "next/link";
 
-const countdown = [
-  { value: "08", label: "Days" },
-  { value: "14", label: "Hours" },
-  { value: "45", label: "Mins" },
-];
+import type {
+  RowDataPacket,
+} from "mysql2";
 
-export default function FeaturedSpotlight() {
+import {
+  CalendarDays,
+  Clock3,
+  MapPin,
+} from "lucide-react";
+
+import db from "@/lib/db";
+
+/*
+ * =====================================
+ * TYPE
+ * =====================================
+ */
+
+interface FeaturedEventRow
+  extends RowDataPacket {
+  id: number;
+
+  title: string;
+
+  slug: string;
+
+  short_description:
+    | string
+    | null;
+
+  description:
+    | string
+    | null;
+
+  event_date: string;
+
+  start_time:
+    | string
+    | null;
+
+  end_time:
+    | string
+    | null;
+
+  venue:
+    | string
+    | null;
+
+  cover_image:
+    | string
+    | null;
+
+  registration_url:
+    | string
+    | null;
+
+  is_featured:
+    | number
+    | boolean;
+}
+
+/*
+ * =====================================
+ * COMPONENT
+ * =====================================
+ */
+
+export default async function FeaturedSpotlight() {
+  /*
+   * =====================================
+   * TODAY
+   * =====================================
+   */
+
+  const today =
+    getTodayDateString();
+
+  /*
+   * =====================================
+   * GET FEATURED EVENT
+   *
+   * Priority:
+   * 1. Featured upcoming event
+   * 2. Nearest upcoming published event
+   * =====================================
+   */
+
+  const [rows] =
+    await db.execute<
+      FeaturedEventRow[]
+    >(
+      `
+        SELECT
+          id,
+          title,
+          slug,
+          short_description,
+          description,
+
+          DATE_FORMAT(
+            event_date,
+            '%Y-%m-%d'
+          ) AS event_date,
+
+          TIME_FORMAT(
+            start_time,
+            '%H:%i'
+          ) AS start_time,
+
+          TIME_FORMAT(
+            end_time,
+            '%H:%i'
+          ) AS end_time,
+
+          venue,
+          cover_image,
+          registration_url,
+          is_featured
+
+        FROM events
+
+        WHERE
+          is_published = TRUE
+          AND event_date >= ?
+
+        ORDER BY
+          is_featured DESC,
+          event_date ASC,
+          start_time ASC
+
+        LIMIT 1
+      `,
+      [today],
+    );
+
+  /*
+   * =====================================
+   * NO UPCOMING EVENT
+   * =====================================
+   */
+
+  if (
+    rows.length === 0
+  ) {
+    return null;
+  }
+
+  const event =
+    rows[0];
+
+  const description =
+    event.description ||
+    event.short_description ||
+    "Join Pentatone Musical Club for another memorable musical experience.";
+
+  const coverImage =
+    event.cover_image ||
+    "/assets/images/events/featured-event.jpg";
+
   return (
     <section
       id="featured-event"
       className="scroll-mt-24 bg-[#f7f8fc] py-16 sm:py-20"
     >
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
-        {/* Section heading */}
+        {/* ================================= */}
+        {/* SECTION HEADING */}
+        {/* ================================= */}
+
         <div className="mb-9 flex items-center gap-4">
           <span className="h-[3px] w-12 bg-[#d40000]" />
 
@@ -23,107 +178,335 @@ export default function FeaturedSpotlight() {
           </h2>
         </div>
 
-        {/* Featured event card */}
+        {/* ================================= */}
+        {/* FEATURED EVENT */}
+        {/* ================================= */}
+
         <div className="grid overflow-hidden rounded-xl bg-white shadow-[0_18px_45px_rgba(15,23,42,0.10)] lg:grid-cols-2">
-          {/* Event image */}
+          {/* ================================= */}
+          {/* IMAGE */}
+          {/* ================================= */}
+
           <div className="relative min-h-[420px] overflow-hidden lg:min-h-[500px]">
             <Image
-              src="/assets/images/events/featured-event.jpg"
-              alt="Pentatone featured musical event"
+              src={
+                coverImage
+              }
+              alt={
+                event.title
+              }
               fill
               priority
               className="object-cover object-center"
               sizes="(max-width: 1024px) 100vw, 50vw"
             />
 
-            {/* Image overlay */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-black/10" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/35 via-transparent to-black/10" />
 
-            {/* Event badges */}
+            {/* DATE BADGE */}
+
             <div className="absolute left-5 top-5 z-10 flex flex-wrap gap-3">
               <span className="bg-white px-4 py-2 text-[11px] font-bold uppercase text-[#d40000] shadow-sm">
-                Live October 25
+                {formatEventBadgeDate(
+                  event.event_date,
+                )}
               </span>
 
-              <span className="bg-[#d40000] px-4 py-2 text-[11px] font-bold uppercase text-white shadow-sm">
-                Registration Open
-              </span>
+              {Boolean(
+                event.is_featured,
+              ) && (
+                <span className="bg-[#d40000] px-4 py-2 text-[11px] font-bold uppercase text-white shadow-sm">
+                  Featured Event
+                </span>
+              )}
             </div>
           </div>
 
-          {/* Event information */}
+          {/* ================================= */}
+          {/* INFORMATION */}
+          {/* ================================= */}
+
           <div className="flex flex-col justify-center px-7 py-10 sm:px-10 lg:px-12">
-            <h3 className="text-3xl font-bold leading-tight text-[#101828] sm:text-4xl">
-              Freshers Musical Night 2026
+            <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#d40000]">
+              Pentatone Event
+            </p>
+
+            <h3 className="mt-3 text-3xl font-bold leading-tight text-[#101828] sm:text-4xl">
+              {
+                event.title
+              }
             </h3>
 
             <p className="mt-5 max-w-xl text-sm leading-7 text-gray-600 sm:text-base">
-              The biggest night of the semester. Welcome the new batch of
-              engineers with a high-voltage musical journey through rock,
-              jazz, and fusion. Join us for a night of unparalleled energy.
+              {
+                description
+              }
             </p>
 
-            {/* Countdown */}
-            <div className="mt-8 grid max-w-md grid-cols-3 gap-3">
-              {countdown.map((item) => (
-                <div
-                  key={item.label}
-                  className="rounded-md border border-[#dce3f1] bg-[#edf2ff] px-3 py-4 text-center"
-                >
-                  <p className="text-3xl font-bold text-[#d40000]">
-                    {item.value}
-                  </p>
+            {/* ================================= */}
+            {/* EVENT META */}
+            {/* ================================= */}
 
-                  <p className="mt-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-gray-600">
-                    {item.label}
-                  </p>
+            <div className="mt-8 space-y-4">
+              {/* DATE */}
+
+              <div className="flex items-center gap-3 text-sm font-medium text-[#202939]">
+                <CalendarDays className="h-5 w-5 text-[#d40000]" />
+
+                <span>
+                  {formatFullDate(
+                    event.event_date,
+                  )}
+                </span>
+              </div>
+
+              {/* TIME */}
+
+              {event.start_time && (
+                <div className="flex items-center gap-3 text-sm font-medium text-[#202939]">
+                  <Clock3 className="h-5 w-5 text-[#d40000]" />
+
+                  <span>
+                    {formatEventTime(
+                      event.start_time,
+                    )}
+
+                    {event.end_time
+                      ? ` – ${formatEventTime(
+                          event.end_time,
+                        )}`
+                      : ""}
+                  </span>
                 </div>
-              ))}
+              )}
+
+              {/* VENUE */}
+
+              {event.venue && (
+                <div className="flex items-center gap-3 text-sm font-medium text-[#202939]">
+                  <MapPin className="h-5 w-5 text-[#d40000]" />
+
+                  <span>
+                    {
+                      event.venue
+                    }
+                  </span>
+                </div>
+              )}
             </div>
 
-            {/* Event location and time */}
-            <div className="mt-8 flex flex-col gap-4 text-sm font-medium text-[#202939] sm:flex-row sm:items-center sm:gap-7">
-              <div className="flex items-center gap-2">
-                <svg
-                  aria-hidden="true"
-                  viewBox="0 0 24 24"
-                  className="h-5 w-5 fill-none stroke-[#d40000]"
-                  strokeWidth="2"
-                >
-                  <path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z" />
-                  <circle cx="12" cy="10" r="2.5" />
-                </svg>
+            {/* ================================= */}
+            {/* ACTIONS */}
+            {/* ================================= */}
 
-                <span>SEC Auditorium</span>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <svg
-                  aria-hidden="true"
-                  viewBox="0 0 24 24"
-                  className="h-5 w-5 fill-none stroke-[#d40000]"
-                  strokeWidth="2"
-                >
-                  <circle cx="12" cy="12" r="9" />
-                  <path d="M12 7v5l3 2" />
-                </svg>
-
-                <span>6:30 PM onwards</span>
-              </div>
-            </div>
-
-            {/* Registration button */}
-            <div className="mt-9">
+            <div className="mt-9 flex flex-col gap-3 sm:flex-row">
               <Link
-                href="/register"
-                className="inline-flex min-h-12 items-center justify-center bg-[#d40000] px-10 text-xs font-bold uppercase tracking-wider text-white shadow-[0_12px_25px_rgba(212,0,0,0.22)] transition hover:bg-[#b80000]"
+                href={`/events/${event.slug}`}
+                className="inline-flex min-h-12 items-center justify-center bg-[#d40000] px-9 text-xs font-bold uppercase tracking-wider text-white shadow-[0_12px_25px_rgba(212,0,0,0.22)] transition hover:bg-[#b80000]"
               >
-                Register Now
+                View Details
               </Link>
+
+              {event.registration_url && (
+                <a
+                  href={
+                    event.registration_url
+                  }
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex min-h-12 items-center justify-center border border-[#101828] px-9 text-xs font-bold uppercase tracking-wider text-[#101828] transition hover:bg-[#101828] hover:text-white"
+                >
+                  Register Now
+                </a>
+              )}
             </div>
           </div>
         </div>
       </div>
     </section>
   );
+}
+
+/*
+ * =====================================
+ * TODAY - BANGLADESH
+ * =====================================
+ */
+
+function getTodayDateString() {
+  const parts =
+    new Intl.DateTimeFormat(
+      "en-US",
+      {
+        timeZone:
+          "Asia/Dhaka",
+
+        year:
+          "numeric",
+
+        month:
+          "2-digit",
+
+        day:
+          "2-digit",
+      },
+    ).formatToParts(
+      new Date(),
+    );
+
+  const year =
+    parts.find(
+      (part) =>
+        part.type ===
+        "year",
+    )?.value;
+
+  const month =
+    parts.find(
+      (part) =>
+        part.type ===
+        "month",
+    )?.value;
+
+  const day =
+    parts.find(
+      (part) =>
+        part.type ===
+        "day",
+    )?.value;
+
+  return `${year}-${month}-${day}`;
+}
+
+/*
+ * =====================================
+ * BADGE DATE
+ * AUG 15
+ * =====================================
+ */
+
+function formatEventBadgeDate(
+  value: string,
+) {
+  const [
+    year,
+    month,
+    day,
+  ] = value
+    .split("-")
+    .map(Number);
+
+  const date =
+    new Date(
+      Date.UTC(
+        year,
+        month - 1,
+        day,
+      ),
+    );
+
+  return new Intl.DateTimeFormat(
+    "en-US",
+    {
+      month: "short",
+
+      day: "2-digit",
+
+      timeZone:
+        "UTC",
+    },
+  )
+    .format(date)
+    .toUpperCase();
+}
+
+/*
+ * =====================================
+ * FULL DATE
+ * =====================================
+ */
+
+function formatFullDate(
+  value: string,
+) {
+  const [
+    year,
+    month,
+    day,
+  ] = value
+    .split("-")
+    .map(Number);
+
+  const date =
+    new Date(
+      Date.UTC(
+        year,
+        month - 1,
+        day,
+      ),
+    );
+
+  return new Intl.DateTimeFormat(
+    "en-US",
+    {
+      weekday: "long",
+
+      month: "long",
+
+      day: "numeric",
+
+      year: "numeric",
+
+      timeZone:
+        "UTC",
+    },
+  ).format(date);
+}
+
+/*
+ * =====================================
+ * TIME
+ * =====================================
+ */
+
+function formatEventTime(
+  value: string,
+) {
+  const [
+    hourString,
+    minuteString,
+  ] = value.split(":");
+
+  const hour =
+    Number(
+      hourString,
+    );
+
+  const minute =
+    Number(
+      minuteString,
+    );
+
+  const date =
+    new Date(
+      2000,
+      0,
+      1,
+      hour,
+      minute,
+    );
+
+  return new Intl.DateTimeFormat(
+    "en-US",
+    {
+      hour:
+        "numeric",
+
+      minute:
+        "2-digit",
+
+      hour12:
+        true,
+    },
+  ).format(date);
 }

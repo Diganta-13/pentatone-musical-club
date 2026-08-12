@@ -41,7 +41,7 @@ const menuItems = [
     label: "Events",
     href: "/admin/events",
     icon: CalendarDays,
-    enabled: false,
+    enabled: true,
   },
   {
     label: "Auditions",
@@ -101,54 +101,73 @@ export default function AdminSidebar() {
 
       <nav className="overflow-y-auto border-t border-white/10 px-3 py-5">
         <div className="space-y-1.5">
-          {menuItems.map((item) => {
-            const Icon = item.icon;
+          {menuItems.map(
+            (item) => {
+              const Icon =
+                item.icon;
 
-            const active =
-              item.href === "/admin"
-                ? pathname === "/admin"
-                : pathname.startsWith(item.href);
+              const active =
+                item.href ===
+                "/admin"
+                  ? pathname ===
+                    "/admin"
+                  : pathname.startsWith(
+                      item.href,
+                    );
 
-            /*
-             * Disabled modules stay visible
-             * but are not clickable until
-             * their pages are implemented.
-             */
+              /*
+               * Disabled modules stay visible
+               * but cannot be clicked until
+               * their pages are implemented.
+               */
 
-            if (!item.enabled) {
+              if (
+                !item.enabled
+              ) {
+                return (
+                  <div
+                    key={
+                      item.label
+                    }
+                    title="This module will be connected shortly"
+                    className="flex cursor-default items-center gap-4 rounded-lg px-4 py-3 text-[12px] font-bold uppercase tracking-[0.08em] text-slate-300/50"
+                  >
+                    <Icon className="h-[19px] w-[19px] shrink-0" />
+
+                    <span>
+                      {
+                        item.label
+                      }
+                    </span>
+                  </div>
+                );
+              }
+
               return (
-                <div
-                  key={item.label}
-                  title="This module will be connected shortly"
-                  className="flex cursor-default items-center gap-4 rounded-lg px-4 py-3 text-[12px] font-bold uppercase tracking-[0.08em] text-slate-300/50"
+                <Link
+                  key={
+                    item.href
+                  }
+                  href={
+                    item.href
+                  }
+                  className={`flex items-center gap-4 rounded-lg px-4 py-3 text-[12px] font-bold uppercase tracking-[0.08em] transition ${
+                    active
+                      ? "bg-[#d90000] text-white shadow-sm"
+                      : "text-slate-200 hover:bg-white/5 hover:text-white"
+                  }`}
                 >
                   <Icon className="h-[19px] w-[19px] shrink-0" />
 
                   <span>
-                    {item.label}
+                    {
+                      item.label
+                    }
                   </span>
-                </div>
+                </Link>
               );
-            }
-
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={`flex items-center gap-4 rounded-lg px-4 py-3 text-[12px] font-bold uppercase tracking-[0.08em] transition ${
-                  active
-                    ? "bg-[#d90000] text-white shadow-sm"
-                    : "text-slate-200 hover:bg-white/5 hover:text-white"
-                }`}
-              >
-                <Icon className="h-[19px] w-[19px] shrink-0" />
-
-                <span>
-                  {item.label}
-                </span>
-              </Link>
-            );
-          })}
+            },
+          )}
         </div>
       </nav>
 
