@@ -4,9 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 import {
-  BarChart3,
   CalendarDays,
-  ClipboardCheck,
   FolderOpen,
   Images,
   LayoutDashboard,
@@ -52,12 +50,6 @@ const menuItems = [
     enabled: false,
   },
   {
-    label: "Attendance",
-    href: "/admin/attendance",
-    icon: ClipboardCheck,
-    enabled: false,
-  },
-  {
     label: "Announcements",
     href: "/admin/announcements",
     icon: Megaphone,
@@ -73,18 +65,12 @@ const menuItems = [
     label: "Gallery",
     href: "/admin/gallery",
     icon: Images,
-    enabled: false,
+    enabled: true,
   },
   {
     label: "Committee",
     href: "/admin/committee",
     icon: UsersRound,
-    enabled: false,
-  },
-  {
-    label: "Reports",
-    href: "/admin/reports",
-    icon: BarChart3,
     enabled: false,
   },
 ];
@@ -95,11 +81,14 @@ export default function AdminSidebar() {
   return (
     <aside className="fixed left-0 top-0 z-40 hidden h-screen w-[250px] flex-col bg-[#273244] text-white lg:flex">
       {/* ============================== */}
-      {/* OFFICIAL PENTATONE LOGO */}
+      {/* LOGO */}
       {/* ============================== */}
 
       <div className="px-6 pb-6 pt-7">
-        <BrandLogo priority className="h-14" />
+        <BrandLogo
+          priority
+          className="h-14"
+        />
 
         <p className="mt-3 text-[9px] font-bold uppercase tracking-[0.16em] text-slate-400">
           Admin Portal
@@ -110,7 +99,7 @@ export default function AdminSidebar() {
       {/* NAVIGATION */}
       {/* ============================== */}
 
-      <nav className="flex-1 overflow-y-auto border-t border-white/10 px-3 py-5">
+      <nav className="overflow-y-auto border-t border-white/10 px-3 py-5">
         <div className="space-y-1.5">
           {menuItems.map((item) => {
             const Icon = item.icon;
@@ -121,10 +110,9 @@ export default function AdminSidebar() {
                 : pathname.startsWith(item.href);
 
             /*
-             * Future modules remain
-             * visually available but
-             * disabled until their pages
-             * are implemented.
+             * Disabled modules stay visible
+             * but are not clickable until
+             * their pages are implemented.
              */
 
             if (!item.enabled) {
@@ -136,7 +124,9 @@ export default function AdminSidebar() {
                 >
                   <Icon className="h-[19px] w-[19px] shrink-0" />
 
-                  <span>{item.label}</span>
+                  <span>
+                    {item.label}
+                  </span>
                 </div>
               );
             }
@@ -153,7 +143,9 @@ export default function AdminSidebar() {
               >
                 <Icon className="h-[19px] w-[19px] shrink-0" />
 
-                <span>{item.label}</span>
+                <span>
+                  {item.label}
+                </span>
               </Link>
             );
           })}
@@ -161,19 +153,19 @@ export default function AdminSidebar() {
       </nav>
 
       {/* ============================== */}
-      {/* BOTTOM ACTIONS */}
+      {/* SETTINGS + LOGOUT */}
       {/* ============================== */}
 
-      <div className="border-t border-white/10 pb-5 pt-4">
-        {/* Settings will be connected later */}
-
+      <div className="mx-3 border-t border-white/10 pb-5 pt-4">
         <div
           title="Settings will be connected shortly"
-          className="flex cursor-default items-center gap-4 px-6 py-3 text-[12px] font-bold uppercase tracking-[0.12em] text-slate-300/50"
+          className="flex cursor-default items-center gap-4 px-3 py-3 text-[12px] font-bold uppercase tracking-[0.12em] text-slate-300/50"
         >
-          <Settings className="h-[19px] w-[19px]" />
+          <Settings className="h-[19px] w-[19px] shrink-0" />
 
-          <span>Settings</span>
+          <span>
+            Settings
+          </span>
         </div>
 
         <AdminLogoutButton />

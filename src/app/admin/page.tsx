@@ -284,8 +284,12 @@ export default async function AdminDashboardPage() {
                     red
                   />
 
-                  <QuickAction label="Members" icon={<UsersRound />} />
-
+<QuickAction
+  label="Members"
+  icon={<UsersRound />}
+  href="/admin/members"
+  enabled
+/>
                   <QuickAction label="Gallery" icon={<Images />} />
 
                   <QuickAction label="Auditions" icon={<Mic2 />} />
