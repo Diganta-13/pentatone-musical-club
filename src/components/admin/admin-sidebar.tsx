@@ -18,6 +18,12 @@ import {
 import AdminLogoutButton from "@/components/admin/admin-logout-button";
 import BrandLogo from "@/components/layout/brand-logo";
 
+/*
+ * =====================================
+ * MENU
+ * =====================================
+ */
+
 const menuItems = [
   {
     label: "Dashboard",
@@ -25,48 +31,56 @@ const menuItems = [
     icon: LayoutDashboard,
     enabled: true,
   },
+
   {
     label: "Members",
     href: "/admin/members",
     icon: UsersRound,
     enabled: true,
   },
+
   {
     label: "Requests",
     href: "/admin/requests",
     icon: UserRoundPlus,
     enabled: true,
   },
+
   {
     label: "Events",
     href: "/admin/events",
     icon: CalendarDays,
     enabled: true,
   },
+
   {
     label: "Auditions",
     href: "/admin/auditions",
     icon: Mic2,
-    enabled: false,
+    enabled: true,
   },
+
   {
     label: "Announcements",
     href: "/admin/announcements",
     icon: Megaphone,
     enabled: false,
   },
+
   {
     label: "Resources",
     href: "/admin/resources",
     icon: FolderOpen,
     enabled: false,
   },
+
   {
     label: "Gallery",
     href: "/admin/gallery",
     icon: Images,
     enabled: true,
   },
+
   {
     label: "Committee",
     href: "/admin/committee",
@@ -75,14 +89,21 @@ const menuItems = [
   },
 ];
 
+/*
+ * =====================================
+ * COMPONENT
+ * =====================================
+ */
+
 export default function AdminSidebar() {
-  const pathname = usePathname();
+  const pathname =
+    usePathname();
 
   return (
     <aside className="fixed left-0 top-0 z-40 hidden h-screen w-[250px] flex-col bg-[#273244] text-white lg:flex">
-      {/* ============================== */}
+      {/* ================================= */}
       {/* LOGO */}
-      {/* ============================== */}
+      {/* ================================= */}
 
       <div className="px-6 pb-6 pt-7">
         <BrandLogo
@@ -95,9 +116,9 @@ export default function AdminSidebar() {
         </p>
       </div>
 
-      {/* ============================== */}
+      {/* ================================= */}
       {/* NAVIGATION */}
-      {/* ============================== */}
+      {/* ================================= */}
 
       <nav className="overflow-y-auto border-t border-white/10 px-3 py-5">
         <div className="space-y-1.5">
@@ -116,9 +137,9 @@ export default function AdminSidebar() {
                     );
 
               /*
-               * Disabled modules stay visible
-               * but cannot be clicked until
-               * their pages are implemented.
+               * Disabled modules remain
+               * visible but cannot be
+               * opened until implemented.
                */
 
               if (
@@ -171,9 +192,9 @@ export default function AdminSidebar() {
         </div>
       </nav>
 
-      {/* ============================== */}
+      {/* ================================= */}
       {/* SETTINGS + LOGOUT */}
-      {/* ============================== */}
+      {/* ================================= */}
 
       <div className="mx-3 border-t border-white/10 pb-5 pt-4">
         <div
