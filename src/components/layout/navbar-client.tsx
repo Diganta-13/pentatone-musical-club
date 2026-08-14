@@ -84,6 +84,32 @@ export default function NavbarClient({
 
   /*
    * =====================================
+   * ROLE ACCESS
+   * =====================================
+   *
+   * Resources are only available
+   * for MEMBER and ADMIN users.
+   */
+
+  const canAccessResources =
+    user?.role === "MEMBER" ||
+    user?.role === "ADMIN";
+
+  /*
+   * =====================================
+   * FILTER NAVIGATION
+   * =====================================
+   */
+
+  const visibleNavLinks =
+    navLinks.filter(
+      (link) =>
+        link.href !== "/resources" ||
+        canAccessResources,
+    );
+
+  /*
+   * =====================================
    * DASHBOARD
    * =====================================
    */
@@ -140,7 +166,7 @@ export default function NavbarClient({
 
         <div className="hidden flex-1 items-center justify-center gap-5 lg:flex xl:gap-7">
 
-          {navLinks.map(
+          {visibleNavLinks.map(
             (link) => {
               const active =
                 isActive(
@@ -303,7 +329,7 @@ export default function NavbarClient({
 
             <div className="space-y-1">
 
-              {navLinks.map(
+              {visibleNavLinks.map(
                 (link) => {
                   const active =
                     isActive(

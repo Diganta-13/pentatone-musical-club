@@ -5,6 +5,16 @@ import {
   MapPin,
 } from "lucide-react";
 
+import {
+  getCurrentUser,
+} from "@/lib/current-user";
+
+/*
+ * =====================================
+ * CLUB INFORMATION
+ * =====================================
+ */
+
 const CLUB_EMAIL =
   "pentatonemusicalclub18@gmail.com";
 
@@ -13,6 +23,12 @@ const FACEBOOK_URL =
 
 const YOUTUBE_URL =
   "https://www.youtube.com/@pentatonemusicalclub409";
+
+/*
+ * =====================================
+ * QUICK LINKS
+ * =====================================
+ */
 
 const quickLinks = [
   {
@@ -33,6 +49,12 @@ const quickLinks = [
   },
 ];
 
+/*
+ * =====================================
+ * FACEBOOK ICON
+ * =====================================
+ */
+
 function FacebookIcon() {
   return (
     <svg
@@ -44,6 +66,12 @@ function FacebookIcon() {
     </svg>
   );
 }
+
+/*
+ * =====================================
+ * YOUTUBE ICON
+ * =====================================
+ */
 
 function YouTubeIcon() {
   return (
@@ -57,7 +85,34 @@ function YouTubeIcon() {
   );
 }
 
-export default function Footer() {
+/*
+ * =====================================
+ * FOOTER
+ * =====================================
+ */
+
+export default async function Footer() {
+  /*
+   * =====================================
+   * CURRENT USER
+   * =====================================
+   */
+
+  const currentUser =
+    await getCurrentUser();
+
+  /*
+   * =====================================
+   * RESOURCE ACCESS
+   *
+   * Only MEMBER and ADMIN
+   * =====================================
+   */
+
+  const canAccessResources =
+    currentUser?.role === "MEMBER" ||
+    currentUser?.role === "ADMIN";
+
   return (
     <footer className="bg-[#273142] text-white">
 
@@ -86,7 +141,9 @@ export default function Footer() {
               {/* FACEBOOK */}
 
               <a
-                href={FACEBOOK_URL}
+                href={
+                  FACEBOOK_URL
+                }
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="Pentatone Musical Club Facebook"
@@ -98,7 +155,9 @@ export default function Footer() {
               {/* YOUTUBE */}
 
               <a
-                href={YOUTUBE_URL}
+                href={
+                  YOUTUBE_URL
+                }
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="Pentatone Musical Club YouTube"
@@ -126,13 +185,19 @@ export default function Footer() {
               {quickLinks.map(
                 (link) => (
                   <li
-                    key={link.label}
+                    key={
+                      link.label
+                    }
                   >
                     <Link
-                      href={link.href}
+                      href={
+                        link.href
+                      }
                       className="text-sm text-slate-300 transition hover:text-[#ed0000]"
                     >
-                      {link.label}
+                      {
+                        link.label
+                      }
                     </Link>
                   </li>
                 ),
@@ -143,7 +208,7 @@ export default function Footer() {
           </div>
 
           {/* ================================= */}
-          {/* RESOURCES */}
+          {/* RESOURCES / EXPLORE */}
           {/* ================================= */}
 
           <div>
@@ -165,16 +230,20 @@ export default function Footer() {
                 </Link>
               </li>
 
-              {/* PRACTICE MATERIALS */}
+              {/* ================================= */}
+              {/* MEMBER + ADMIN ONLY */}
+              {/* ================================= */}
 
-              <li>
-                <Link
-                  href="/resources"
-                  className="text-sm text-slate-300 transition hover:text-[#ed0000]"
-                >
-                  Practice Materials
-                </Link>
-              </li>
+              {canAccessResources && (
+                <li>
+                  <Link
+                    href="/resources"
+                    className="text-sm text-slate-300 transition hover:text-[#ed0000]"
+                  >
+                    Resources
+                  </Link>
+                </li>
+              )}
 
               {/* CONTACT */}
 
@@ -220,7 +289,9 @@ export default function Footer() {
 
                 <MapPin
                   className="mt-1 h-5 w-5 shrink-0 text-[#ed0000]"
-                  strokeWidth={1.8}
+                  strokeWidth={
+                    1.8
+                  }
                 />
 
                 <p className="text-sm leading-7 text-slate-300">
@@ -239,14 +310,18 @@ export default function Footer() {
 
                 <Mail
                   className="mt-0.5 h-5 w-5 shrink-0 text-[#ed0000]"
-                  strokeWidth={1.8}
+                  strokeWidth={
+                    1.8
+                  }
                 />
 
                 <a
                   href={`mailto:${CLUB_EMAIL}`}
                   className="break-all text-sm leading-6 text-slate-300 transition hover:text-[#ed0000]"
                 >
-                  {CLUB_EMAIL}
+                  {
+                    CLUB_EMAIL
+                  }
                 </a>
 
               </div>
@@ -258,7 +333,7 @@ export default function Footer() {
         </div>
 
         {/* ================================= */}
-        {/* BOTTOM COPYRIGHT */}
+        {/* COPYRIGHT */}
         {/* ================================= */}
 
         <div className="mt-14 border-t border-white/10 pt-7 text-center">

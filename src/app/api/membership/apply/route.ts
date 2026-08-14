@@ -2,173 +2,150 @@ import { randomUUID } from "crypto";
 import { promises as fs } from "fs";
 import path from "path";
 
-import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
-import type { RowDataPacket } from "mysql2";
+
+import type {
+  ResultSetHeader,
+  RowDataPacket,
+} from "mysql2";
+
 import { z } from "zod";
 
 import db from "@/lib/db";
-
 import {
-  SESSION_COOKIE_NAME,
-  verifySessionToken,
-} from "@/lib/auth";
+  getCurrentUser,
+} from "@/lib/current-user";
 
-const applicationSchema = z.object({
-  studentId: z
-    .string()
-    .trim()
-    .min(3)
-    .max(100),
+export const runtime = "nodejs";
 
-  departmentId: z.coerce
-    .number()
-    .int()
-    .positive(),
+/*
+ * =====================================
+ * VALIDATION
+ * =====================================
+ */
 
-  session: z
-    .string()
-    .trim()
-    .min(2)
-    .max(30),
+const applicationSchema =
+  z.object({
+    studentId: z
+      .string()
+      .trim()
+      .min(3)
+      .max(100),
 
-  currentSemester: z
-    .string()
-    .trim()
-    .min(2)
-    .max(50),
+    departmentId: z.coerce
+      .number()
+      .int()
+      .positive(),
 
-  phone: z
-    .string()
-    .trim()
-    .min(6)
-    .max(30),
+    session: z
+      .string()
+      .trim()
+      .min(2)
+      .max(30),
 
-  primarySkill: z
-    .string()
-    .trim()
-    .min(2)
-    .max(100),
+    currentSemester: z
+      .string()
+      .trim()
+      .min(2)
+      .max(50),
 
-  proofType: z.enum([
-    "STUDENT_ID",
-    "REGISTRATION_CARD",
-    "OTHER",
-  ]),
-});
+    phone: z
+      .string()
+      .trim()
+      .min(6)
+      .max(30),
 
-interface UserRow extends RowDataPacket {
-  id: number;
-  role: string;
-  is_active: number | boolean;
-}
+    primarySkill: z
+      .string()
+      .trim()
+      .min(2)
+      .max(100),
+
+    proofType: z.enum([
+      "STUDENT_ID",
+      "REGISTRATION_CARD",
+      "OTHER",
+    ]),
+  });
+
+/*
+ * =====================================
+ * TYPES
+ * =====================================
+ */
 
 interface MembershipRow
   extends RowDataPacket {
   id: number;
+
   status:
     | "PENDING"
     | "APPROVED"
     | "REJECTED";
 }
 
+/*
+ * =====================================
+ * POST
+ * =====================================
+ */
+
 export async function POST(
   request: Request,
 ) {
+  let savedFilePath:
+    | string
+    | null = null;
+
   try {
     /*
-     * Authentication
+     * =================================
+     * AUTHENTICATION
+     * =================================
      */
 
-    const cookieStore =
-      await cookies();
+    const user =
+      await getCurrentUser();
 
-    const token = cookieStore.get(
-      SESSION_COOKIE_NAME,
-    )?.value;
-
-    if (!token) {
+    if (!user) {
       return NextResponse.json(
         {
           success: false,
+
           message:
             "You must be logged in to apply.",
         },
-        { status: 401 },
-      );
-    }
-
-    const session =
-      await verifySessionToken(token);
-
-    if (!session) {
-      return NextResponse.json(
         {
-          success: false,
-          message:
-            "Your session is invalid or expired.",
+          status: 401,
         },
-        { status: 401 },
       );
     }
 
     /*
-     * Get CURRENT role from database.
-     * Database is authoritative.
+     * Only GENERAL_USER can apply
      */
 
-    const [users] =
-      await db.execute<UserRow[]>(
-        `
-          SELECT
-            u.id,
-            u.is_active,
-            r.name AS role
-          FROM users u
-          INNER JOIN roles r
-            ON r.id = u.role_id
-          WHERE u.id = ?
-          LIMIT 1
-        `,
-        [session.userId],
-      );
-
-    if (users.length === 0) {
+    if (
+      user.role !==
+      "GENERAL_USER"
+    ) {
       return NextResponse.json(
         {
           success: false,
-          message: "User not found.",
-        },
-        { status: 404 },
-      );
-    }
 
-    const user = users[0];
-
-    if (!user.is_active) {
-      return NextResponse.json(
-        {
-          success: false,
-          message:
-            "Your account is inactive.",
-        },
-        { status: 403 },
-      );
-    }
-
-    if (user.role !== "GENERAL_USER") {
-      return NextResponse.json(
-        {
-          success: false,
           message:
             "Only general users can submit membership applications.",
         },
-        { status: 403 },
+        {
+          status: 403,
+        },
       );
     }
 
     /*
-     * Prevent duplicate active applications
+     * =================================
+     * PREVENT DUPLICATE APPLICATION
+     * =================================
      */
 
     const [existingRequests] =
@@ -179,116 +156,165 @@ export async function POST(
           SELECT
             id,
             status
+
           FROM membership_requests
+
           WHERE user_id = ?
-          ORDER BY created_at DESC
+
+          ORDER BY
+            created_at DESC,
+            id DESC
+
           LIMIT 1
         `,
-        [user.id],
+        [
+          user.id,
+        ],
       );
 
     if (
-      existingRequests.length > 0
+      existingRequests.length >
+      0
     ) {
       const latest =
         existingRequests[0];
 
       if (
-        latest.status === "PENDING"
+        latest.status ===
+        "PENDING"
       ) {
         return NextResponse.json(
           {
             success: false,
+
             message:
               "You already have a pending membership application.",
           },
-          { status: 409 },
+          {
+            status: 409,
+          },
         );
       }
 
       if (
-        latest.status === "APPROVED"
+        latest.status ===
+        "APPROVED"
       ) {
         return NextResponse.json(
           {
             success: false,
+
             message:
               "Your membership has already been approved.",
           },
-          { status: 409 },
+          {
+            status: 409,
+          },
         );
       }
     }
 
     /*
-     * Read multipart form
+     * =================================
+     * FORM DATA
+     * =================================
      */
 
     const formData =
       await request.formData();
 
     const validation =
-      applicationSchema.safeParse({
-        studentId:
-          formData.get("studentId"),
-
-        departmentId:
-          formData.get(
-            "departmentId",
-          ),
-
-        session:
-          formData.get("session"),
-
-        currentSemester:
-          formData.get(
-            "currentSemester",
-          ),
-
-        phone:
-          formData.get("phone"),
-
-        primarySkill:
-          formData.get(
-            "primarySkill",
-          ),
-
-        proofType:
-          formData.get("proofType"),
-      });
-
-    if (!validation.success) {
-      return NextResponse.json(
+      applicationSchema.safeParse(
         {
-          success: false,
-          message:
-            validation.error.issues[0]
-              ?.message ||
-            "Please provide valid application information.",
-        },
-        { status: 400 },
-      );
-    }
+          studentId:
+            formData.get(
+              "studentId",
+            ),
 
-    const proof =
-      formData.get("proof");
+          departmentId:
+            formData.get(
+              "departmentId",
+            ),
+
+          session:
+            formData.get(
+              "session",
+            ),
+
+          currentSemester:
+            formData.get(
+              "currentSemester",
+            ),
+
+          phone:
+            formData.get(
+              "phone",
+            ),
+
+          primarySkill:
+            formData.get(
+              "primarySkill",
+            ),
+
+          proofType:
+            formData.get(
+              "proofType",
+            ),
+        },
+      );
 
     if (
-      !proof ||
-      typeof proof === "string"
+      !validation.success
     ) {
       return NextResponse.json(
         {
           success: false,
+
           message:
-            "Student verification document is required.",
+            validation.error
+              .issues[0]
+              ?.message ||
+            "Please provide valid application information.",
         },
-        { status: 400 },
+        {
+          status: 400,
+        },
       );
     }
 
     /*
-     * File validation
+     * =================================
+     * PROOF FILE
+     * =================================
+     */
+
+    const proof =
+      formData.get(
+        "proof",
+      );
+
+    if (
+      !proof ||
+      typeof proof ===
+        "string"
+    ) {
+      return NextResponse.json(
+        {
+          success: false,
+
+          message:
+            "Student verification document is required.",
+        },
+        {
+          status: 400,
+        },
+      );
+    }
+
+    /*
+     * =================================
+     * FILE TYPE
+     * =================================
      */
 
     const allowedTypes = [
@@ -305,33 +331,47 @@ export async function POST(
       return NextResponse.json(
         {
           success: false,
+
           message:
             "Only JPG, PNG and PDF documents are allowed.",
         },
-        { status: 400 },
+        {
+          status: 400,
+        },
       );
     }
+
+    /*
+     * =================================
+     * FILE SIZE
+     * =================================
+     */
 
     const maxFileSize =
       4 * 1024 * 1024;
 
     if (
-      proof.size > maxFileSize
+      proof.size >
+      maxFileSize
     ) {
       return NextResponse.json(
         {
           success: false,
+
           message:
             "Verification document must be smaller than 4 MB.",
         },
-        { status: 400 },
+        {
+          status: 400,
+        },
       );
     }
 
     const {
       studentId,
       departmentId,
-      session: studentSession,
+      session:
+        studentSession,
       currentSemester,
       phone,
       primarySkill,
@@ -339,7 +379,9 @@ export async function POST(
     } = validation.data;
 
     /*
-     * Verify department exists
+     * =================================
+     * VERIFY DEPARTMENT
+     * =================================
      */
 
     const [departments] =
@@ -348,28 +390,41 @@ export async function POST(
       >(
         `
           SELECT id
+
           FROM departments
+
           WHERE id = ?
+
           LIMIT 1
         `,
-        [departmentId],
+        [
+          departmentId,
+        ],
       );
 
-    if (departments.length === 0) {
+    if (
+      departments.length === 0
+    ) {
       return NextResponse.json(
         {
           success: false,
+
           message:
             "Selected department does not exist.",
         },
-        { status: 400 },
+        {
+          status: 400,
+        },
       );
     }
 
     /*
-     * Save verification document
+     * =================================
+     * PRIVATE FILE STORAGE
      *
-     * Demo/local implementation.
+     * IMPORTANT:
+     * NOT inside /public
+     * =================================
      */
 
     const extensionMap: Record<
@@ -378,19 +433,26 @@ export async function POST(
     > = {
       "image/jpeg": "jpg",
       "image/png": "png",
-      "application/pdf": "pdf",
+      "application/pdf":
+        "pdf",
     };
 
     const extension =
-      extensionMap[proof.type];
+      extensionMap[
+        proof.type
+      ];
 
-    const fileName = `${user.id}-${randomUUID()}.${extension}`;
+    const fileName =
+      `${user.id}-${randomUUID()}.${extension}`;
+
+    /*
+     * storage/membership
+     */
 
     const uploadDirectory =
       path.join(
         process.cwd(),
-        "public",
-        "uploads",
+        "storage",
         "membership",
       );
 
@@ -401,65 +463,87 @@ export async function POST(
       },
     );
 
-    const filePath = path.join(
-      uploadDirectory,
-      fileName,
-    );
+    savedFilePath =
+      path.join(
+        uploadDirectory,
+        fileName,
+      );
 
-    const buffer = Buffer.from(
-      await proof.arrayBuffer(),
-    );
+    const buffer =
+      Buffer.from(
+        await proof.arrayBuffer(),
+      );
 
     await fs.writeFile(
-      filePath,
+      savedFilePath,
       buffer,
     );
 
-    const proofUrl =
-      `/uploads/membership/${fileName}`;
-
     /*
-     * Save application
+     * =================================
+     * DATABASE INSERT
+     * =================================
      */
 
-    await db.execute(
-      `
-        INSERT INTO membership_requests (
-          user_id,
-          student_id,
-          department_id,
-          session,
-          current_semester,
+    const [result] =
+      await db.execute<
+        ResultSetHeader
+      >(
+        `
+          INSERT INTO membership_requests (
+            user_id,
+            student_id,
+            department_id,
+            session,
+            current_semester,
+            phone,
+            primary_skill,
+            proof_type,
+            proof_url,
+            status
+          )
+
+          VALUES (
+            ?, ?, ?, ?, ?, ?, ?, ?, ?, 'PENDING'
+          )
+        `,
+        [
+          user.id,
+          studentId,
+          departmentId,
+          studentSession,
+          currentSemester,
           phone,
-          primary_skill,
-          proof_type,
-          proof_url,
-          status
-        )
-        VALUES (
-          ?, ?, ?, ?, ?, ?, ?, ?, ?, 'PENDING'
-        )
-      `,
-      [
-        user.id,
-        studentId,
-        departmentId,
-        studentSession,
-        currentSemester,
-        phone,
-        primarySkill,
-        proofType,
-        proofUrl,
-      ],
-    );
+          primarySkill,
+          proofType,
+
+          /*
+           * Store only private filename
+           */
+
+          fileName,
+        ],
+      );
+
+    /*
+     * =================================
+     * SUCCESS
+     * =================================
+     */
 
     return NextResponse.json(
       {
         success: true,
+
         message:
           "Membership application submitted successfully.",
+
+        requestId:
+          result.insertId,
       },
-      { status: 201 },
+      {
+        status: 201,
+      },
     );
   } catch (error) {
     console.error(
@@ -467,13 +551,33 @@ export async function POST(
       error,
     );
 
+    /*
+     * Remove orphan file
+     * if DB operation failed.
+     */
+
+    if (savedFilePath) {
+      try {
+        await fs.unlink(
+          savedFilePath,
+        );
+      } catch {
+        /*
+         * File may already be absent.
+         */
+      }
+    }
+
     return NextResponse.json(
       {
         success: false,
+
         message:
           "Something went wrong while submitting your application.",
       },
-      { status: 500 },
+      {
+        status: 500,
+      },
     );
   }
 }

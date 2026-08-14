@@ -1,12 +1,7 @@
-import Link from "next/link";
+import { redirect } from "next/navigation";
 
-import type {
-  ReactNode,
-} from "react";
-
-import type {
-  RowDataPacket,
-} from "mysql2";
+import type { ReactNode } from "react";
+import type { RowDataPacket } from "mysql2";
 
 import {
   ArrowRight,
@@ -26,12 +21,15 @@ import {
 import Navbar from "@/components/layout/navbar";
 import Footer from "@/components/layout/footer";
 
-import { getCurrentUser } from "@/lib/current-user";
+import {
+  getCurrentUser,
+} from "@/lib/current-user";
+
 import db from "@/lib/db";
 
 /*
  * =====================================
- * ALWAYS LOAD FRESH DATABASE DATA
+ * ALWAYS LOAD FRESH DATA
  * =====================================
  */
 
@@ -105,7 +103,7 @@ interface ResourceRow
 
 /*
  * =====================================
- * PAGE
+ * RESOURCES PAGE
  * =====================================
  */
 
@@ -121,7 +119,33 @@ export default async function ResourcesPage() {
 
   /*
    * =====================================
-   * LOAD ALL PUBLISHED RESOURCES
+   * ACCESS CONTROL
+   *
+   * Guest
+   * → Login
+   *
+   * General User
+   * → Dashboard
+   *
+   * Member / Admin
+   * → Allowed
+   * =====================================
+   */
+
+  if (!currentUser) {
+    redirect("/login");
+  }
+
+  if (
+    currentUser.role !== "MEMBER" &&
+    currentUser.role !== "ADMIN"
+  ) {
+    redirect("/dashboard");
+  }
+
+  /*
+   * =====================================
+   * LOAD PUBLISHED RESOURCES
    * =====================================
    */
 
@@ -150,7 +174,8 @@ export default async function ResourcesPage() {
 
         FROM resources
 
-        WHERE is_published = 1
+        WHERE
+          is_published = 1
 
         ORDER BY
           is_featured DESC,
@@ -176,7 +201,7 @@ export default async function ResourcesPage() {
 
   /*
    * =====================================
-   * PDF RESOURCES
+   * RESOURCE GROUPS
    * =====================================
    */
 
@@ -187,31 +212,12 @@ export default async function ResourcesPage() {
         "PDF",
     );
 
-  /*
-   * =====================================
-   * VIDEO RESOURCES
-   * =====================================
-   */
-
   const videoResources =
     resources.filter(
       (resource) =>
         resource.resource_type ===
         "VIDEO",
     );
-
-  /*
-   * =====================================
-   * EXTERNAL LINK RESOURCES
-   * =====================================
-   *
-   * IMPORTANT:
-   * We are NOT filtering by resource_url.
-   * So every published LINK resource
-   * will appear on the page.
-   *
-   * =====================================
-   */
 
   const linkResources =
     resources.filter(
@@ -222,7 +228,7 @@ export default async function ResourcesPage() {
 
   /*
    * =====================================
-   * RENDER
+   * PAGE
    * =====================================
    */
 
@@ -247,7 +253,7 @@ export default async function ResourcesPage() {
             <div className="relative z-10">
 
               <span className="inline-flex rounded-full bg-[#d40000] px-4 py-2 text-[9px] font-black uppercase tracking-[0.06em] text-white">
-                Academic Excellence
+                Member Learning Center
               </span>
 
               <h1 className="mt-7 text-5xl font-black tracking-[-0.04em] text-[#111827] sm:text-6xl">
@@ -263,9 +269,9 @@ export default async function ResourcesPage() {
               <p className="mt-5 max-w-xl text-sm leading-7 text-slate-600 sm:text-[15px]">
                 Learn, practice and improve your
                 musical skills with Pentatone
-                resources. Our curated library is
-                designed for students who want to
-                grow as musicians and performers.
+                resources. This learning library
+                is available to official club
+                members and administrators.
               </p>
 
               <div className="mt-8 flex flex-wrap gap-3">
@@ -304,7 +310,9 @@ export default async function ResourcesPage() {
 
             </div>
 
-            {/* FEATURED RESOURCE */}
+            {/* ================================= */}
+            {/* FEATURED */}
+            {/* ================================= */}
 
             <div className="relative z-10">
 
@@ -379,9 +387,9 @@ export default async function ResourcesPage() {
                     </h2>
 
                     <p className="mt-2 text-sm leading-6 text-slate-500">
-                      Learning resources will appear
-                      here when published by the
-                      club.
+                      Learning resources will
+                      appear here when published
+                      by the club.
                     </p>
 
                   </div>
@@ -396,7 +404,7 @@ export default async function ResourcesPage() {
         </section>
 
         {/* ================================= */}
-        {/* RESOURCE CATEGORIES */}
+        {/* CATEGORIES */}
         {/* ================================= */}
 
         <section
@@ -408,7 +416,7 @@ export default async function ResourcesPage() {
 
             <SectionHeader
               title="Resource Categories"
-              description="Structured learning paths for every discipline."
+              description="Structured learning materials for Pentatone members."
             />
 
             <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
@@ -456,7 +464,7 @@ export default async function ResourcesPage() {
         </section>
 
         {/* ================================= */}
-        {/* DOWNLOAD MATERIALS */}
+        {/* PDF DOWNLOADS */}
         {/* ================================= */}
 
         <section
@@ -546,12 +554,13 @@ export default async function ResourcesPage() {
 
                       </div>
 
+                      {/* ================================= */}
+                      {/* PROTECTED PDF DOWNLOAD */}
+                      {/* ================================= */}
+
                       {resource.file_path ? (
                         <a
-                          href={
-                            resource.file_path
-                          }
-                          download
+                          href={`/api/resources/${resource.id}/file`}
                           className="mt-5 inline-flex h-9 w-full items-center justify-center gap-2 rounded-md bg-[#d40000] text-[9px] font-black uppercase tracking-[0.08em] text-white transition hover:bg-red-700"
                         >
                           <Download className="h-3.5 w-3.5" />
@@ -708,23 +717,23 @@ export default async function ResourcesPage() {
         )}
 
         {/* ================================= */}
-        {/* EXTERNAL LEARNING RESOURCES */}
+        {/* EXTERNAL RESOURCES */}
         {/* ================================= */}
 
-        {linkResources.length >
-          0 && (
-          <section
-            id="external-resources"
-            className="bg-[#f7f9ff] py-20"
-          >
+        <section
+          id="external-resources"
+          className="bg-[#f7f9ff] py-20"
+        >
 
-            <div className="mx-auto max-w-[1180px] px-5 lg:px-8">
+          <div className="mx-auto max-w-[1180px] px-5 lg:px-8">
 
-              <SectionHeader
-                title="External Learning Resources"
-                description="Useful websites, references and online learning materials selected by Pentatone."
-              />
+            <SectionHeader
+              title="External Learning Resources"
+              description="Useful websites, references and online learning materials selected by Pentatone."
+            />
 
+            {linkResources.length >
+            0 ? (
               <div className="mt-8 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
 
                 {linkResources.map(
@@ -736,13 +745,10 @@ export default async function ResourcesPage() {
                       className="group overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-[0_10px_35px_rgba(15,23,42,0.06)] transition hover:-translate-y-1 hover:shadow-[0_18px_45px_rgba(15,23,42,0.10)]"
                     >
 
-                      {/* OPTIONAL COVER */}
-
                       {resource.cover_image && (
                         <div className="h-44 overflow-hidden bg-slate-100">
 
                           {/* eslint-disable-next-line @next/next/no-img-element */}
-
                           <img
                             src={
                               resource.cover_image
@@ -842,41 +848,18 @@ export default async function ResourcesPage() {
                 )}
 
               </div>
-
-            </div>
-
-          </section>
-        )}
-
-        {/* ================================= */}
-        {/* EMPTY EXTERNAL MESSAGE */}
-        {/* ================================= */}
-
-        {linkResources.length ===
-          0 && (
-          <section
-            id="external-resources"
-            className="bg-[#f7f9ff] py-20"
-          >
-
-            <div className="mx-auto max-w-[1180px] px-5 lg:px-8">
-
-              <SectionHeader
-                title="External Learning Resources"
-                description="Useful websites, references and online learning materials selected by Pentatone."
-              />
-
+            ) : (
               <EmptyResources
                 message="No external learning resources have been published yet."
               />
+            )}
 
-            </div>
+          </div>
 
-          </section>
-        )}
+        </section>
 
         {/* ================================= */}
-        {/* IMPROVE YOUR MUSICAL JOURNEY */}
+        {/* JOURNEY */}
         {/* ================================= */}
 
         <section className="bg-[#fbfbff] py-20">
@@ -884,8 +867,6 @@ export default async function ResourcesPage() {
           <div className="mx-auto max-w-[1180px] px-5 lg:px-8">
 
             <div className="grid overflow-hidden rounded-3xl bg-[#151d2b] lg:grid-cols-2">
-
-              {/* IMAGE */}
 
               <div className="min-h-[370px]">
 
@@ -907,8 +888,6 @@ export default async function ResourcesPage() {
                 )}
 
               </div>
-
-              {/* CONTENT */}
 
               <div className="flex flex-col justify-center px-8 py-12 text-white sm:px-12">
 
@@ -967,12 +946,13 @@ export default async function ResourcesPage() {
               </h2>
 
               <p className="mx-auto mt-4 max-w-2xl text-sm leading-6 text-white/80">
-                Explore Pentatone&apos;s learning
-                resources and continue building
-                your musical skills.
+                Explore Pentatone&apos;s
+                learning resources and
+                continue building your
+                musical skills.
               </p>
 
-              <div className="mt-8 flex flex-wrap justify-center gap-3">
+              <div className="mt-8 flex justify-center">
 
                 <a
                   href="#resource-library"
@@ -980,15 +960,6 @@ export default async function ResourcesPage() {
                 >
                   Explore Resources
                 </a>
-
-                {!currentUser && (
-                  <Link
-                    href="/register"
-                    className="inline-flex h-11 items-center justify-center rounded-lg border border-white px-6 text-[9px] font-black uppercase tracking-[0.08em] text-white transition hover:bg-white hover:text-[#d40000]"
-                  >
-                    Join Club
-                  </Link>
-                )}
 
               </div>
 
@@ -1235,8 +1206,13 @@ function formatMonth(
   return new Intl.DateTimeFormat(
     "en-US",
     {
-      month: "short",
-      year: "numeric",
+      month:
+        "short",
+
+      year:
+        "numeric",
     },
-  ).format(date);
+  ).format(
+    date,
+  );
 }
