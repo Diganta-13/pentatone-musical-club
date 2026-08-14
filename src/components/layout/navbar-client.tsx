@@ -1,21 +1,34 @@
 "use client";
 
 import Link from "next/link";
-
-import { Menu, X } from "lucide-react";
-
 import { usePathname } from "next/navigation";
-
 import { useState } from "react";
+
+import {
+  Menu,
+  X,
+} from "lucide-react";
 
 import BrandLogo from "@/components/layout/brand-logo";
 import LogoutButton from "@/components/auth/logout-button";
+
+/*
+ * =====================================
+ * TYPES
+ * =====================================
+ */
 
 type NavbarClientProps = {
   user: {
     role: string;
   } | null;
 };
+
+/*
+ * =====================================
+ * PUBLIC NAVIGATION
+ * =====================================
+ */
 
 const navLinks = [
   {
@@ -52,13 +65,28 @@ const navLinks = [
   },
 ];
 
+/*
+ * =====================================
+ * NAVBAR
+ * =====================================
+ */
+
 export default function NavbarClient({
   user,
 }: NavbarClientProps) {
-  const pathname = usePathname();
+  const pathname =
+    usePathname();
 
-  const [isMenuOpen, setIsMenuOpen] =
-    useState(false);
+  const [
+    isMenuOpen,
+    setIsMenuOpen,
+  ] = useState(false);
+
+  /*
+   * =====================================
+   * DASHBOARD
+   * =====================================
+   */
 
   const dashboardHref =
     user?.role === "ADMIN"
@@ -70,52 +98,80 @@ export default function NavbarClient({
       ? "Admin Portal"
       : "Dashboard";
 
+  /*
+   * =====================================
+   * ACTIVE LINK
+   * =====================================
+   */
+
+  function isActive(
+    href: string,
+  ) {
+    if (href === "/") {
+      return pathname === "/";
+    }
+
+    return pathname.startsWith(
+      href,
+    );
+  }
+
   return (
-    <header className="sticky top-0 z-50 border-b border-gray-100 bg-white/95 backdrop-blur-md">
+    <header className="sticky top-0 z-50 border-b border-slate-100 bg-white/95 backdrop-blur-md">
 
-      <nav className="mx-auto flex h-[74px] max-w-[1180px] items-center justify-between px-5 lg:px-8">
+      {/* ================================= */}
+      {/* DESKTOP NAVBAR */}
+      {/* ================================= */}
 
+      <nav className="mx-auto flex h-[76px] max-w-[1200px] items-center justify-between gap-5 px-5 lg:px-8">
+
+        {/* ================================= */}
         {/* LOGO */}
+        {/* ================================= */}
 
         <BrandLogo
           priority
-          className="h-12"
+          className="h-12 shrink-0"
         />
 
         {/* ================================= */}
-        {/* DESKTOP NAVIGATION */}
+        {/* DESKTOP LINKS */}
         {/* ================================= */}
 
-        <div className="hidden items-center gap-5 lg:flex xl:gap-7">
+        <div className="hidden flex-1 items-center justify-center gap-5 lg:flex xl:gap-7">
 
           {navLinks.map(
             (link) => {
-              const isActive =
-                link.href === "/"
-                  ? pathname === "/"
-                  : pathname.startsWith(
-                      link.href,
-                    );
+              const active =
+                isActive(
+                  link.href,
+                );
 
               return (
                 <Link
-                  key={link.label}
-                  href={link.href}
+                  key={
+                    link.href
+                  }
+                  href={
+                    link.href
+                  }
                   aria-current={
-                    isActive
+                    active
                       ? "page"
                       : undefined
                   }
-                  className={`relative whitespace-nowrap py-2 text-[12px] font-semibold tracking-wide transition-colors xl:text-[13px] ${
-                    isActive
+                  className={`relative whitespace-nowrap py-2 text-[12px] font-semibold transition-colors xl:text-[13px] ${
+                    active
                       ? "text-red-600"
-                      : "text-gray-600 hover:text-red-600"
+                      : "text-slate-600 hover:text-red-600"
                   }`}
                 >
-                  {link.label}
+                  {
+                    link.label
+                  }
 
-                  {isActive && (
-                    <span className="absolute inset-x-0 -bottom-1 mx-auto h-0.5 w-full rounded-full bg-red-600" />
+                  {active && (
+                    <span className="absolute inset-x-0 -bottom-1 h-0.5 rounded-full bg-red-600" />
                   )}
 
                 </Link>
@@ -126,48 +182,72 @@ export default function NavbarClient({
         </div>
 
         {/* ================================= */}
-        {/* DESKTOP ACCOUNT */}
+        {/* DESKTOP ACCOUNT ACTIONS */}
         {/* ================================= */}
 
-        <div className="hidden items-center gap-4 lg:flex xl:gap-6">
+        <div className="hidden shrink-0 items-center gap-3 lg:flex">
 
-         {!user ? (
-  <>
-    {pathname !== "/login" && (
-      <Link
-        href="/login"
-        className="whitespace-nowrap text-[13px] font-semibold text-gray-800 transition-colors hover:text-red-600"
-      >
-        Login
-      </Link>
-    )}
-
-    {pathname !== "/register" && (
-      <Link
-        href="/register"
-        className="whitespace-nowrap rounded-full bg-red-600 px-6 py-3 text-[13px] font-bold text-white shadow-lg shadow-red-200 transition hover:bg-red-700 xl:px-7"
-      >
-        Join Club
-      </Link>
-    )}
-  </>
-) : (
+          {!user ? (
             <>
+
+              {/* ============================= */}
+              {/* LOGIN */}
+              {/* Hide on /login */}
+              {/* ============================= */}
+
+              {pathname !==
+                "/login" && (
+                <Link
+                  href="/login"
+                  className="inline-flex h-11 items-center justify-center whitespace-nowrap rounded-full border border-slate-300 bg-white px-6 text-[12px] font-bold uppercase tracking-[0.06em] text-slate-800 transition hover:border-red-600 hover:bg-red-50 hover:text-red-600"
+                >
+                  Login
+                </Link>
+              )}
+
+              {/* ============================= */}
+              {/* JOIN CLUB */}
+              {/* Hide on /register */}
+              {/* ============================= */}
+
+              {pathname !==
+                "/register" && (
+                <Link
+                  href="/register"
+                  className="inline-flex h-11 items-center justify-center whitespace-nowrap rounded-full bg-red-600 px-7 text-[12px] font-bold uppercase tracking-[0.06em] text-white shadow-lg shadow-red-100 transition hover:bg-red-700"
+                >
+                  Join Club
+                </Link>
+              )}
+
+            </>
+          ) : (
+            <>
+
+              {/* ============================= */}
               {/* DASHBOARD / ADMIN PORTAL */}
+              {/* ============================= */}
 
               <Link
-                href={dashboardHref}
-                className="whitespace-nowrap rounded-full bg-red-600 px-5 py-3 text-[12px] font-bold text-white transition hover:bg-red-700 xl:px-6 xl:text-[13px]"
+                href={
+                  dashboardHref
+                }
+                className="inline-flex h-11 items-center justify-center whitespace-nowrap rounded-full bg-red-600 px-6 text-[12px] font-bold uppercase tracking-[0.05em] text-white shadow-lg shadow-red-100 transition hover:bg-red-700"
               >
-                {dashboardLabel}
+                {
+                  dashboardLabel
+                }
               </Link>
 
+              {/* ============================= */}
               {/* LOGOUT */}
+              {/* ============================= */}
 
               <LogoutButton
                 variant="nav"
                 redirectTo="/"
               />
+
             </>
           )}
 
@@ -193,88 +273,118 @@ export default function NavbarClient({
                 !previous,
             )
           }
-          className="flex h-10 w-10 items-center justify-center rounded-lg border border-gray-200 text-gray-900 lg:hidden"
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-800 transition hover:border-red-200 hover:text-red-600 lg:hidden"
         >
           {isMenuOpen ? (
-            <X size={22} />
+            <X
+              size={21}
+            />
           ) : (
-            <Menu size={22} />
+            <Menu
+              size={21}
+            />
           )}
         </button>
 
       </nav>
 
       {/* ================================= */}
-      {/* MOBILE NAVIGATION */}
+      {/* MOBILE MENU */}
       {/* ================================= */}
 
       {isMenuOpen && (
-        <div className="border-t border-gray-100 bg-white px-5 py-5 lg:hidden">
+        <div className="border-t border-slate-100 bg-white lg:hidden">
 
-          <div className="mx-auto flex max-w-[1180px] flex-col gap-1">
+          <div className="mx-auto max-w-[1200px] px-5 py-5">
 
+            {/* ================================= */}
             {/* MOBILE LINKS */}
+            {/* ================================= */}
 
-            {navLinks.map(
-              (link) => {
-                const isActive =
-                  link.href === "/"
-                    ? pathname === "/"
-                    : pathname.startsWith(
-                        link.href,
-                      );
+            <div className="space-y-1">
 
-                return (
-                  <Link
-                    key={link.label}
-                    href={link.href}
-                    onClick={() =>
-                      setIsMenuOpen(
-                        false,
-                      )
-                    }
-                    className={`rounded-lg px-4 py-3 text-sm font-semibold transition ${
-                      isActive
-                        ? "bg-red-50 text-red-600"
-                        : "text-gray-700 hover:bg-gray-50 hover:text-red-600"
-                    }`}
-                  >
-                    {link.label}
-                  </Link>
-                );
-              },
-            )}
+              {navLinks.map(
+                (link) => {
+                  const active =
+                    isActive(
+                      link.href,
+                    );
 
-            {/* MOBILE ACCOUNT */}
+                  return (
+                    <Link
+                      key={
+                        link.href
+                      }
+                      href={
+                        link.href
+                      }
+                      onClick={() =>
+                        setIsMenuOpen(
+                          false,
+                        )
+                      }
+                      className={`block rounded-lg px-4 py-3 text-sm font-semibold transition ${
+                        active
+                          ? "bg-red-50 text-red-600"
+                          : "text-slate-700 hover:bg-slate-50 hover:text-red-600"
+                      }`}
+                    >
+                      {
+                        link.label
+                      }
+                    </Link>
+                  );
+                },
+              )}
 
-            <div className="mt-4 border-t border-gray-100 pt-4">
+            </div>
+
+            {/* ================================= */}
+            {/* MOBILE ACCOUNT ACTIONS */}
+            {/* ================================= */}
+
+            <div className="mt-5 border-t border-slate-100 pt-5">
 
               {!user ? (
-  <div className="flex flex-col gap-3">
+                <div className="flex flex-col gap-3">
 
-    {pathname !== "/login" && (
-      <Link
-        href="/login"
-        onClick={() => setIsMenuOpen(false)}
-        className="rounded-lg border border-red-600 px-4 py-3 text-center text-sm font-semibold text-red-600 transition hover:bg-red-50"
-      >
-        Login
-      </Link>
-    )}
+                  {/* LOGIN */}
 
-    {pathname !== "/register" && (
-      <Link
-        href="/register"
-        onClick={() => setIsMenuOpen(false)}
-        className="rounded-lg bg-red-600 px-4 py-3 text-center text-sm font-semibold text-white transition hover:bg-red-700"
-      >
-        Join Club
-      </Link>
-    )}
+                  {pathname !==
+                    "/login" && (
+                    <Link
+                      href="/login"
+                      onClick={() =>
+                        setIsMenuOpen(
+                          false,
+                        )
+                      }
+                      className="inline-flex h-11 items-center justify-center rounded-full border border-red-600 bg-white px-5 text-[12px] font-bold uppercase tracking-[0.06em] text-red-600 transition hover:bg-red-50"
+                    >
+                      Login
+                    </Link>
+                  )}
 
-  </div>
-) : (
-                <div className="flex flex-col gap-4">
+                  {/* JOIN CLUB */}
+
+                  {pathname !==
+                    "/register" && (
+                    <Link
+                      href="/register"
+                      onClick={() =>
+                        setIsMenuOpen(
+                          false,
+                        )
+                      }
+                      className="inline-flex h-11 items-center justify-center rounded-full bg-red-600 px-5 text-[12px] font-bold uppercase tracking-[0.06em] text-white transition hover:bg-red-700"
+                    >
+                      Join Club
+                    </Link>
+                  )}
+
+                </div>
+              ) : (
+                <div className="flex flex-col gap-3">
 
                   {/* DASHBOARD */}
 
@@ -287,7 +397,7 @@ export default function NavbarClient({
                         false,
                       )
                     }
-                    className="rounded-lg bg-red-600 px-4 py-3 text-center text-sm font-semibold text-white transition hover:bg-red-700"
+                    className="inline-flex h-11 items-center justify-center rounded-full bg-red-600 px-5 text-[12px] font-bold uppercase tracking-[0.06em] text-white transition hover:bg-red-700"
                   >
                     {
                       dashboardLabel
@@ -296,10 +406,14 @@ export default function NavbarClient({
 
                   {/* LOGOUT */}
 
-                  <LogoutButton
-                    variant="nav"
-                    redirectTo="/"
-                  />
+                  <div className="flex justify-center rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
+
+                    <LogoutButton
+                      variant="nav"
+                      redirectTo="/"
+                    />
+
+                  </div>
 
                 </div>
               )}
