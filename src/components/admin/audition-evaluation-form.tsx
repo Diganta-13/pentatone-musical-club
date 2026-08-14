@@ -7,13 +7,8 @@ import {
   XCircle,
 } from "lucide-react";
 
-import {
-  useState,
-} from "react";
-
-import {
-  useRouter,
-} from "next/navigation";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 /*
  * =====================================
@@ -30,13 +25,9 @@ type Props = {
   applicationId: number;
 
   initialTechnicalSkill: number;
-
   initialRhythmTiming: number;
-
   initialCreativity: number;
-
   initialStagePresence: number;
-
   initialOverallPerformance: number;
 
   initialNotes: string;
@@ -44,6 +35,10 @@ type Props = {
   initialDecision:
     | Decision
     | null;
+};
+
+type ApiResponse = {
+  message?: string;
 };
 
 /*
@@ -56,21 +51,15 @@ export default function AuditionEvaluationForm({
   applicationId,
 
   initialTechnicalSkill,
-
   initialRhythmTiming,
-
   initialCreativity,
-
   initialStagePresence,
-
   initialOverallPerformance,
 
   initialNotes,
-
   initialDecision,
 }: Props) {
-  const router =
-    useRouter();
+  const router = useRouter();
 
   /*
    * =====================================
@@ -78,33 +67,17 @@ export default function AuditionEvaluationForm({
    * =====================================
    */
 
-  const [
-    technicalSkill,
-    setTechnicalSkill,
-  ] = useState(
-    initialTechnicalSkill,
-  );
+  const [technicalSkill, setTechnicalSkill] =
+    useState(initialTechnicalSkill);
 
-  const [
-    rhythmTiming,
-    setRhythmTiming,
-  ] = useState(
-    initialRhythmTiming,
-  );
+  const [rhythmTiming, setRhythmTiming] =
+    useState(initialRhythmTiming);
 
-  const [
-    creativity,
-    setCreativity,
-  ] = useState(
-    initialCreativity,
-  );
+  const [creativity, setCreativity] =
+    useState(initialCreativity);
 
-  const [
-    stagePresence,
-    setStagePresence,
-  ] = useState(
-    initialStagePresence,
-  );
+  const [stagePresence, setStagePresence] =
+    useState(initialStagePresence);
 
   const [
     overallPerformance,
@@ -119,12 +92,8 @@ export default function AuditionEvaluationForm({
    * =====================================
    */
 
-  const [
-    notes,
-    setNotes,
-  ] = useState(
-    initialNotes,
-  );
+  const [notes, setNotes] =
+    useState(initialNotes);
 
   /*
    * =====================================
@@ -135,10 +104,9 @@ export default function AuditionEvaluationForm({
   const [
     currentDecision,
     setCurrentDecision,
-  ] =
-    useState<Decision | null>(
-      initialDecision,
-    );
+  ] = useState<Decision | null>(
+    initialDecision,
+  );
 
   /*
    * =====================================
@@ -146,53 +114,44 @@ export default function AuditionEvaluationForm({
    * =====================================
    */
 
-  const [
-    saving,
-    setSaving,
-  ] =
-    useState<Decision | null>(
-      null,
-    );
+  const [saving, setSaving] =
+    useState<Decision | null>(null);
 
-  const [
-    error,
-    setError,
-  ] = useState("");
+  const [error, setError] =
+    useState("");
 
-  const [
-    success,
-    setSuccess,
-  ] = useState("");
+  const [success, setSuccess] =
+    useState("");
 
   /*
    * =====================================
-   * TOTAL
+   * FINAL DECISION
+   * =====================================
+   */
+
+  const isFinalDecision =
+    currentDecision === "APPROVED" ||
+    currentDecision === "REJECTED";
+
+  /*
+   * =====================================
+   * SCORE CALCULATION
    * =====================================
    */
 
   const totalScore =
-    Number(
-      technicalSkill,
-    ) +
-    Number(
-      rhythmTiming,
-    ) +
-    Number(
-      creativity,
-    ) +
-    Number(
-      stagePresence,
-    ) +
-    Number(
-      overallPerformance,
-    );
+    Number(technicalSkill) +
+    Number(rhythmTiming) +
+    Number(creativity) +
+    Number(stagePresence) +
+    Number(overallPerformance);
 
   const averageScore =
     totalScore / 5;
 
   /*
    * =====================================
-   * VALIDATE
+   * VALIDATION
    * =====================================
    */
 
@@ -206,16 +165,16 @@ export default function AuditionEvaluationForm({
     ];
 
     const invalid =
-      scores.some(
-        (score) =>
-          !Number.isFinite(
-            Number(score),
-          ) ||
-          Number(score) <
-            0 ||
-          Number(score) >
-            10,
-      );
+      scores.some((score) => {
+        const value =
+          Number(score);
+
+        return (
+          !Number.isFinite(value) ||
+          value < 0 ||
+          value > 10
+        );
+      });
 
     if (invalid) {
       setError(
@@ -225,10 +184,7 @@ export default function AuditionEvaluationForm({
       return false;
     }
 
-    if (
-      notes.length >
-      5000
-    ) {
+    if (notes.length > 5000) {
       setError(
         "Evaluator notes cannot exceed 5000 characters.",
       );
@@ -241,13 +197,13 @@ export default function AuditionEvaluationForm({
 
   /*
    * =====================================
-   * RESPONSE
+   * API RESPONSE
    * =====================================
    */
 
   async function readResponse(
     response: Response,
-  ) {
+  ): Promise<ApiResponse> {
     const text =
       await response.text();
 
@@ -258,7 +214,7 @@ export default function AuditionEvaluationForm({
     try {
       return JSON.parse(
         text,
-      );
+      ) as ApiResponse;
     } catch {
       throw new Error(
         `Unexpected server response (${response.status}).`,
@@ -268,7 +224,7 @@ export default function AuditionEvaluationForm({
 
   /*
    * =====================================
-   * SAVE
+   * SAVE EVALUATION
    * =====================================
    */
 
@@ -279,8 +235,16 @@ export default function AuditionEvaluationForm({
       return;
     }
 
-    setError("");
+    /*
+     * Once APPROVED or REJECTED,
+     * decision is final from the UI.
+     */
 
+    if (isFinalDecision) {
+      return;
+    }
+
+    setError("");
     setSuccess("");
 
     if (!validate()) {
@@ -288,16 +252,13 @@ export default function AuditionEvaluationForm({
     }
 
     /*
-     * FINAL DECISION CONFIRM
+     * APPROVE CONFIRMATION
      */
 
-    if (
-      decision ===
-      "APPROVED"
-    ) {
+    if (decision === "APPROVED") {
       const confirmed =
         window.confirm(
-          "Approve this audition application?",
+          "Approve this audition application? This will mark the applicant as selected.",
         );
 
       if (!confirmed) {
@@ -305,13 +266,14 @@ export default function AuditionEvaluationForm({
       }
     }
 
-    if (
-      decision ===
-      "REJECTED"
-    ) {
+    /*
+     * REJECT CONFIRMATION
+     */
+
+    if (decision === "REJECTED") {
       const confirmed =
         window.confirm(
-          "Reject this audition application?",
+          "Reject this audition application? This will mark the final result as rejected.",
         );
 
       if (!confirmed) {
@@ -320,38 +282,28 @@ export default function AuditionEvaluationForm({
     }
 
     try {
-      setSaving(
-        decision,
-      );
+      setSaving(decision);
 
       const response =
         await fetch(
           `/api/admin/auditions/applications/${applicationId}/evaluation`,
           {
-            method:
-              "POST",
+            method: "POST",
 
             headers: {
               "Content-Type":
                 "application/json",
             },
 
-            body:
-              JSON.stringify({
-                technicalSkill,
-
-                rhythmTiming,
-
-                creativity,
-
-                stagePresence,
-
-                overallPerformance,
-
-                notes,
-
-                decision,
-              }),
+            body: JSON.stringify({
+              technicalSkill,
+              rhythmTiming,
+              creativity,
+              stagePresence,
+              overallPerformance,
+              notes,
+              decision,
+            }),
           },
         );
 
@@ -367,6 +319,10 @@ export default function AuditionEvaluationForm({
         );
       }
 
+      /*
+       * Update UI immediately.
+       */
+
       setCurrentDecision(
         decision,
       );
@@ -377,10 +333,10 @@ export default function AuditionEvaluationForm({
       );
 
       /*
-       * Refresh:
-       * stats
-       * applicant badge
-       * score
+       * Refresh server data:
+       * - applicant status
+       * - statistics
+       * - scores
        */
 
       router.refresh();
@@ -389,7 +345,7 @@ export default function AuditionEvaluationForm({
         () => {
           setSuccess("");
         },
-        2200,
+        2500,
       );
     } catch (error) {
       setError(
@@ -410,12 +366,15 @@ export default function AuditionEvaluationForm({
 
   return (
     <div className="space-y-6">
+
       {/* ================================= */}
-      {/* SCORE */}
+      {/* CRITERIA SCORING */}
       {/* ================================= */}
 
       <section>
+
         <div className="flex items-center justify-between gap-3 border-b border-red-100 pb-3">
+
           <p className="text-[9px] font-black uppercase tracking-[0.12em] text-gray-600">
             Criteria Scoring
           </p>
@@ -427,9 +386,11 @@ export default function AuditionEvaluationForm({
               }
             />
           )}
+
         </div>
 
         <div className="mt-4 space-y-3">
+
           <ScoreInput
             label="Technical Skill"
             value={
@@ -437,6 +398,10 @@ export default function AuditionEvaluationForm({
             }
             onChange={
               setTechnicalSkill
+            }
+            disabled={
+              Boolean(saving) ||
+              isFinalDecision
             }
           />
 
@@ -448,6 +413,10 @@ export default function AuditionEvaluationForm({
             onChange={
               setRhythmTiming
             }
+            disabled={
+              Boolean(saving) ||
+              isFinalDecision
+            }
           />
 
           <ScoreInput
@@ -457,6 +426,10 @@ export default function AuditionEvaluationForm({
             }
             onChange={
               setCreativity
+            }
+            disabled={
+              Boolean(saving) ||
+              isFinalDecision
             }
           />
 
@@ -468,6 +441,10 @@ export default function AuditionEvaluationForm({
             onChange={
               setStagePresence
             }
+            disabled={
+              Boolean(saving) ||
+              isFinalDecision
+            }
           />
 
           <ScoreInput
@@ -478,15 +455,23 @@ export default function AuditionEvaluationForm({
             onChange={
               setOverallPerformance
             }
+            disabled={
+              Boolean(saving) ||
+              isFinalDecision
+            }
           />
+
         </div>
 
+
         {/* ================================= */}
-        {/* TOTAL */}
+        {/* SCORE SUMMARY */}
         {/* ================================= */}
 
         <div className="mt-5 grid grid-cols-2 rounded-xl bg-[#e8edfb] p-4">
+
           <div>
+
             <p className="text-[8px] font-bold uppercase tracking-[0.1em] text-gray-500">
               Average Score
             </p>
@@ -496,9 +481,12 @@ export default function AuditionEvaluationForm({
                 1,
               )}
             </p>
+
           </div>
 
+
           <div className="text-right">
+
             <p className="text-[8px] font-bold uppercase tracking-[0.1em] text-gray-500">
               Total
             </p>
@@ -509,26 +497,30 @@ export default function AuditionEvaluationForm({
               )}
               /50
             </p>
+
           </div>
+
         </div>
+
       </section>
 
+
       {/* ================================= */}
-      {/* NOTES */}
+      {/* EVALUATOR NOTES */}
       {/* ================================= */}
 
       <section>
+
         <div className="flex items-center justify-between gap-3">
+
           <label className="text-[9px] font-black uppercase tracking-[0.12em] text-gray-600">
             Evaluator Notes
           </label>
 
           <span className="text-[9px] text-gray-400">
-            {
-              notes.length
-            }
-            /5000
+            {notes.length}/5000
           </span>
+
         </div>
 
         <textarea
@@ -536,20 +528,110 @@ export default function AuditionEvaluationForm({
           maxLength={5000}
           value={notes}
           disabled={
-            Boolean(saving)
+            Boolean(saving) ||
+            isFinalDecision
           }
-          onChange={(
-            event,
-          ) =>
+          onChange={(event) =>
             setNotes(
-              event.target
-                .value,
+              event.target.value,
             )
           }
           placeholder="Write detailed feedback here..."
-          className="mt-3 w-full resize-y rounded-xl border border-transparent bg-[#eef2ff] px-4 py-3 text-xs leading-5 text-[#344054] outline-none transition focus:border-red-200 focus:bg-white focus:ring-2 focus:ring-red-50 disabled:opacity-60"
+          className="mt-3 w-full resize-y rounded-xl border border-transparent bg-[#eef2ff] px-4 py-3 text-xs leading-5 text-[#344054] outline-none transition focus:border-red-200 focus:bg-white focus:ring-2 focus:ring-red-50 disabled:cursor-not-allowed disabled:opacity-70"
         />
+
       </section>
+
+
+      {/* ================================= */}
+      {/* APPROVED RESULT */}
+      {/* ================================= */}
+
+      {currentDecision ===
+        "APPROVED" && (
+        <div className="rounded-xl border border-green-200 bg-green-50 px-4 py-4">
+
+          <div className="flex items-center gap-3">
+
+            <CheckCircle2 className="h-5 w-5 shrink-0 text-green-600" />
+
+            <div>
+
+              <p className="text-xs font-black uppercase tracking-[0.06em] text-green-700">
+                Audition Approved
+              </p>
+
+              <p className="mt-1 text-xs leading-5 text-green-700">
+                This applicant has been selected successfully.
+              </p>
+
+            </div>
+
+          </div>
+
+        </div>
+      )}
+
+
+      {/* ================================= */}
+      {/* UNDER REVIEW RESULT */}
+      {/* ================================= */}
+
+      {currentDecision ===
+        "UNDER_REVIEW" && (
+        <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-4">
+
+          <div className="flex items-center gap-3">
+
+            <Clock3 className="h-5 w-5 shrink-0 text-amber-600" />
+
+            <div>
+
+              <p className="text-xs font-black uppercase tracking-[0.06em] text-amber-700">
+                Under Review
+              </p>
+
+              <p className="mt-1 text-xs leading-5 text-amber-700">
+                This audition is currently under evaluation.
+              </p>
+
+            </div>
+
+          </div>
+
+        </div>
+      )}
+
+
+      {/* ================================= */}
+      {/* REJECTED RESULT */}
+      {/* ================================= */}
+
+      {currentDecision ===
+        "REJECTED" && (
+        <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-4">
+
+          <div className="flex items-center gap-3">
+
+            <XCircle className="h-5 w-5 shrink-0 text-red-600" />
+
+            <div>
+
+              <p className="text-xs font-black uppercase tracking-[0.06em] text-red-700">
+                Application Rejected
+              </p>
+
+              <p className="mt-1 text-xs leading-5 text-red-700">
+                This applicant was not selected for this audition.
+              </p>
+
+            </div>
+
+          </div>
+
+        </div>
+      )}
+
 
       {/* ================================= */}
       {/* ERROR */}
@@ -561,6 +643,7 @@ export default function AuditionEvaluationForm({
         </div>
       )}
 
+
       {/* ================================= */}
       {/* SUCCESS */}
       {/* ================================= */}
@@ -571,104 +654,166 @@ export default function AuditionEvaluationForm({
         </div>
       )}
 
+
       {/* ================================= */}
       {/* ACTIONS */}
       {/* ================================= */}
 
       <section className="space-y-2">
-        {/* APPROVE */}
 
-        <button
-          type="button"
-          disabled={
-            Boolean(saving)
-          }
-          onClick={() =>
-            void saveEvaluation(
-              "APPROVED",
-            )
-          }
-          className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-[#d40000] text-[10px] font-black uppercase tracking-[0.06em] text-white transition hover:bg-[#b80000] disabled:cursor-not-allowed disabled:opacity-60"
-        >
-          {saving ===
-          "APPROVED" ? (
-            <>
-              <Loader2 className="h-4 w-4 animate-spin" />
+        {/* ================================= */}
+        {/* FINAL APPROVED */}
+        {/* ================================= */}
 
-              Saving...
-            </>
-          ) : (
-            <>
-              <CheckCircle2 className="h-4 w-4" />
+        {currentDecision ===
+          "APPROVED" && (
+          <div className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-lg bg-green-600 text-[10px] font-black uppercase tracking-[0.06em] text-white">
 
-              Approve Audition
-            </>
-          )}
-        </button>
+            <CheckCircle2 className="h-4 w-4" />
 
-        {/* UNDER REVIEW */}
+            Audition Approved
 
-        <button
-          type="button"
-          disabled={
-            Boolean(saving)
-          }
-          onClick={() =>
-            void saveEvaluation(
-              "UNDER_REVIEW",
-            )
-          }
-          className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-lg border border-[#101828] bg-white text-[10px] font-black uppercase tracking-[0.06em] text-[#101828] transition hover:bg-[#101828] hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
-        >
-          {saving ===
-          "UNDER_REVIEW" ? (
-            <>
-              <Loader2 className="h-4 w-4 animate-spin" />
+          </div>
+        )}
 
-              Saving...
-            </>
-          ) : (
-            <>
-              <Clock3 className="h-4 w-4" />
 
-              Keep Under Review
-            </>
-          )}
-        </button>
+        {/* ================================= */}
+        {/* FINAL REJECTED */}
+        {/* ================================= */}
 
-        {/* REJECT */}
+        {currentDecision ===
+          "REJECTED" && (
+          <div className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-lg bg-red-600 text-[10px] font-black uppercase tracking-[0.06em] text-white">
 
-        <button
-          type="button"
-          disabled={
-            Boolean(saving)
-          }
-          onClick={() =>
-            void saveEvaluation(
-              "REJECTED",
-            )
-          }
-          className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-lg text-[10px] font-black uppercase tracking-[0.08em] text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
-        >
-          {saving ===
-          "REJECTED" ? (
-            <>
-              <Loader2 className="h-4 w-4 animate-spin" />
+            <XCircle className="h-4 w-4" />
 
-              Saving...
-            </>
-          ) : (
-            <>
-              <XCircle className="h-4 w-4" />
+            Application Rejected
 
-              Reject Application
-            </>
-          )}
-        </button>
+          </div>
+        )}
+
+
+        {/* ================================= */}
+        {/* ACTIONS BEFORE FINAL DECISION */}
+        {/* ================================= */}
+
+        {!isFinalDecision && (
+          <>
+
+            {/* APPROVE */}
+
+            <button
+              type="button"
+              disabled={
+                Boolean(saving)
+              }
+              onClick={() =>
+                void saveEvaluation(
+                  "APPROVED",
+                )
+              }
+              className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-[#d40000] text-[10px] font-black uppercase tracking-[0.06em] text-white transition hover:bg-[#b80000] disabled:cursor-not-allowed disabled:opacity-60"
+            >
+
+              {saving ===
+              "APPROVED" ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <CheckCircle2 className="h-4 w-4" />
+                  Approve Audition
+                </>
+              )}
+
+            </button>
+
+
+            {/* UNDER REVIEW */}
+
+            <button
+              type="button"
+              disabled={
+                Boolean(saving) ||
+                currentDecision ===
+                  "UNDER_REVIEW"
+              }
+              onClick={() =>
+                void saveEvaluation(
+                  "UNDER_REVIEW",
+                )
+              }
+              className={`inline-flex h-11 w-full items-center justify-center gap-2 rounded-lg border text-[10px] font-black uppercase tracking-[0.06em] transition disabled:cursor-not-allowed ${
+                currentDecision ===
+                "UNDER_REVIEW"
+                  ? "border-amber-400 bg-amber-50 text-amber-700"
+                  : "border-[#101828] bg-white text-[#101828] hover:bg-[#101828] hover:text-white disabled:opacity-60"
+              }`}
+            >
+
+              {saving ===
+              "UNDER_REVIEW" ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Saving...
+                </>
+              ) : currentDecision ===
+                "UNDER_REVIEW" ? (
+                <>
+                  <Clock3 className="h-4 w-4" />
+                  Under Review
+                </>
+              ) : (
+                <>
+                  <Clock3 className="h-4 w-4" />
+                  Keep Under Review
+                </>
+              )}
+
+            </button>
+
+
+            {/* REJECT */}
+
+            <button
+              type="button"
+              disabled={
+                Boolean(saving)
+              }
+              onClick={() =>
+                void saveEvaluation(
+                  "REJECTED",
+                )
+              }
+              className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-lg text-[10px] font-black uppercase tracking-[0.08em] text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+
+              {saving ===
+              "REJECTED" ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <XCircle className="h-4 w-4" />
+                  Reject Application
+                </>
+              )}
+
+            </button>
+
+          </>
+        )}
+
       </section>
+
     </div>
   );
 }
+
 
 /*
  * =====================================
@@ -680,6 +825,7 @@ function ScoreInput({
   label,
   value,
   onChange,
+  disabled = false,
 }: {
   label: string;
 
@@ -688,29 +834,31 @@ function ScoreInput({
   onChange: (
     value: number,
   ) => void;
+
+  disabled?: boolean;
 }) {
   return (
     <div className="flex items-center justify-between gap-4">
+
       <label className="text-xs font-medium text-[#101828]">
         {label}
       </label>
 
       <div className="flex items-center gap-2">
+
         <input
           type="number"
           min={0}
           max={10}
           step={0.5}
           value={value}
-          onChange={(
-            event,
-          ) => {
-            const value =
-              event.target
-                .value;
+          disabled={disabled}
+          onChange={(event) => {
+            const inputValue =
+              event.target.value;
 
             if (
-              value === ""
+              inputValue === ""
             ) {
               onChange(0);
 
@@ -718,7 +866,7 @@ function ScoreInput({
             }
 
             const score =
-              Number(value);
+              Number(inputValue);
 
             onChange(
               Number.isFinite(
@@ -728,16 +876,19 @@ function ScoreInput({
                 : 0,
             );
           }}
-          className="h-9 w-16 rounded-md border border-transparent bg-[#e8edfb] px-2 text-center text-sm font-black text-[#101828] outline-none transition focus:border-red-200 focus:bg-white focus:ring-2 focus:ring-red-50"
+          className="h-9 w-16 rounded-md border border-transparent bg-[#e8edfb] px-2 text-center text-sm font-black text-[#101828] outline-none transition focus:border-red-200 focus:bg-white focus:ring-2 focus:ring-red-50 disabled:cursor-not-allowed disabled:opacity-70"
         />
 
         <span className="text-[10px] font-bold text-gray-400">
           /10
         </span>
+
       </div>
+
     </div>
   );
 }
+
 
 /*
  * =====================================
@@ -748,8 +899,7 @@ function ScoreInput({
 function DecisionBadge({
   decision,
 }: {
-  decision:
-    Decision;
+  decision: Decision;
 }) {
   const styles = {
     UNDER_REVIEW:
@@ -762,14 +912,22 @@ function DecisionBadge({
       "bg-red-50 text-red-600",
   }[decision];
 
+  const labels = {
+    UNDER_REVIEW:
+      "Under Review",
+
+    APPROVED:
+      "Approved",
+
+    REJECTED:
+      "Rejected",
+  }[decision];
+
   return (
     <span
       className={`rounded-full px-2.5 py-1 text-[8px] font-black uppercase tracking-[0.05em] ${styles}`}
     >
-      {decision.replaceAll(
-        "_",
-        " ",
-      )}
+      {labels}
     </span>
   );
 }

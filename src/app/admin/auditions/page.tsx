@@ -28,22 +28,11 @@ import db from "@/lib/db";
  * =========================================================
  */
 
-type ApplicationStatus =
-  | "PENDING"
-  | "UNDER_REVIEW"
-  | "APPROVED"
-  | "REJECTED";
+type ApplicationStatus = "PENDING" | "UNDER_REVIEW" | "APPROVED" | "REJECTED";
 
-type SessionStatus =
-  | "DRAFT"
-  | "OPEN"
-  | "CLOSED"
-  | "COMPLETED";
+type SessionStatus = "DRAFT" | "OPEN" | "CLOSED" | "COMPLETED";
 
-type EvaluationDecision =
-  | "UNDER_REVIEW"
-  | "APPROVED"
-  | "REJECTED";
+type EvaluationDecision = "UNDER_REVIEW" | "APPROVED" | "REJECTED";
 
 /*
  * =========================================================
@@ -262,10 +251,7 @@ export default async function AdminAuditionsPage({
   const requestedSessionId = Number(params.session);
 
   const selectedSession =
-    sessions.find(
-      (session) =>
-        session.id === requestedSessionId,
-    ) ||
+    sessions.find((session) => session.id === requestedSessionId) ||
     sessions[0] ||
     null;
 
@@ -275,24 +261,18 @@ export default async function AdminAuditionsPage({
    * =======================================================
    */
 
-  const selectedInstrument =
-    params.instrument?.trim() || "all";
+  const selectedInstrument = params.instrument?.trim() || "all";
 
-  const selectedDepartment =
-    params.department?.trim() || "all";
+  const selectedDepartment = params.department?.trim() || "all";
 
-  const selectedStatus =
-    params.status?.trim().toLowerCase() || "all";
+  const selectedStatus = params.status?.trim().toLowerCase() || "all";
 
-  const requestedApplicantId = Number(
-    params.applicant,
-  );
+  const requestedApplicantId = Number(params.applicant);
 
   const requestedLimit = Number(params.limit);
 
   const limit =
-    Number.isInteger(requestedLimit) &&
-    requestedLimit > 0
+    Number.isInteger(requestedLimit) && requestedLimit > 0
       ? Math.min(requestedLimit, 100)
       : 8;
 
@@ -302,9 +282,8 @@ export default async function AdminAuditionsPage({
    * =======================================================
    */
 
-  const [applications] =
-    await db.execute<ApplicationRow[]>(
-      `
+  const [applications] = await db.execute<ApplicationRow[]>(
+    `
         SELECT
           aa.id,
           aa.session_id,
@@ -377,7 +356,7 @@ export default async function AdminAuditionsPage({
           aa.created_at DESC,
           aa.id DESC
       `,
-    );
+  );
 
   /*
    * =======================================================
@@ -387,9 +366,7 @@ export default async function AdminAuditionsPage({
 
   const sessionApplications = selectedSession
     ? applications.filter(
-        (application) =>
-          application.session_id ===
-          selectedSession.id,
+        (application) => application.session_id === selectedSession.id,
       )
     : [];
 
@@ -399,27 +376,20 @@ export default async function AdminAuditionsPage({
    * =======================================================
    */
 
-  const totalApplicants =
-    sessionApplications.length;
+  const totalApplicants = sessionApplications.length;
 
-  const pendingApplicants =
-    sessionApplications.filter(
-      (application) =>
-        application.status === "PENDING" ||
-        application.status === "UNDER_REVIEW",
-    ).length;
+  const pendingApplicants = sessionApplications.filter(
+    (application) =>
+      application.status === "PENDING" || application.status === "UNDER_REVIEW",
+  ).length;
 
-  const approvedApplicants =
-    sessionApplications.filter(
-      (application) =>
-        application.status === "APPROVED",
-    ).length;
+  const approvedApplicants = sessionApplications.filter(
+    (application) => application.status === "APPROVED",
+  ).length;
 
-  const rejectedApplicants =
-    sessionApplications.filter(
-      (application) =>
-        application.status === "REJECTED",
-    ).length;
+  const rejectedApplicants = sessionApplications.filter(
+    (application) => application.status === "REJECTED",
+  ).length;
 
   /*
    * =======================================================
@@ -430,10 +400,7 @@ export default async function AdminAuditionsPage({
   const instruments = Array.from(
     new Set(
       sessionApplications
-        .map(
-          (application) =>
-            application.instrument,
-        )
+        .map((application) => application.instrument)
         .filter(Boolean),
     ),
   ).sort((a, b) => a.localeCompare(b));
@@ -441,16 +408,8 @@ export default async function AdminAuditionsPage({
   const departments = Array.from(
     new Set(
       sessionApplications
-        .map(
-          (application) =>
-            application.department_short_name,
-        )
-        .filter(
-          (
-            department,
-          ): department is string =>
-            Boolean(department),
-        ),
+        .map((application) => application.department_short_name)
+        .filter((department): department is string => Boolean(department)),
     ),
   ).sort((a, b) => a.localeCompare(b));
 
@@ -460,65 +419,47 @@ export default async function AdminAuditionsPage({
    * =======================================================
    */
 
-  const filteredApplications =
-    sessionApplications.filter(
-      (application) => {
-        /*
-         * INSTRUMENT
-         */
+  const filteredApplications = sessionApplications.filter((application) => {
+    /*
+     * INSTRUMENT
+     */
 
-        const instrumentMatches =
-          selectedInstrument === "all" ||
-          application.instrument ===
-            selectedInstrument;
+    const instrumentMatches =
+      selectedInstrument === "all" ||
+      application.instrument === selectedInstrument;
 
-        /*
-         * DEPARTMENT
-         */
+    /*
+     * DEPARTMENT
+     */
 
-        const departmentMatches =
-          selectedDepartment === "all" ||
-          application.department_short_name ===
-            selectedDepartment;
+    const departmentMatches =
+      selectedDepartment === "all" ||
+      application.department_short_name === selectedDepartment;
 
-        /*
-         * STATUS
-         */
+    /*
+     * STATUS
+     */
 
-        let statusMatches = true;
+    let statusMatches = true;
 
-        if (selectedStatus === "pending") {
-          statusMatches =
-            application.status === "PENDING";
-        }
+    if (selectedStatus === "pending") {
+      statusMatches = application.status === "PENDING";
+    }
 
-        if (
-          selectedStatus === "under_review"
-        ) {
-          statusMatches =
-            application.status ===
-            "UNDER_REVIEW";
-        }
+    if (selectedStatus === "under_review") {
+      statusMatches = application.status === "UNDER_REVIEW";
+    }
 
-        if (selectedStatus === "approved") {
-          statusMatches =
-            application.status ===
-            "APPROVED";
-        }
+    if (selectedStatus === "approved") {
+      statusMatches = application.status === "APPROVED";
+    }
 
-        if (selectedStatus === "rejected") {
-          statusMatches =
-            application.status ===
-            "REJECTED";
-        }
+    if (selectedStatus === "rejected") {
+      statusMatches = application.status === "REJECTED";
+    }
 
-        return (
-          instrumentMatches &&
-          departmentMatches &&
-          statusMatches
-        );
-      },
-    );
+    return instrumentMatches && departmentMatches && statusMatches;
+  });
 
   /*
    * =======================================================
@@ -528,9 +469,7 @@ export default async function AdminAuditionsPage({
 
   const selectedApplicant =
     filteredApplications.find(
-      (application) =>
-        application.id ===
-        requestedApplicantId,
+      (application) => application.id === requestedApplicantId,
     ) ||
     filteredApplications[0] ||
     null;
@@ -541,13 +480,11 @@ export default async function AdminAuditionsPage({
    * =======================================================
    */
 
-  let evaluation: EvaluationRow | null =
-    null;
+  let evaluation: EvaluationRow | null = null;
 
   if (selectedApplicant) {
-    const [evaluationRows] =
-      await db.execute<EvaluationRow[]>(
-        `
+    const [evaluationRows] = await db.execute<EvaluationRow[]>(
+      `
           SELECT
             technical_skill,
             rhythm_timing,
@@ -568,11 +505,10 @@ export default async function AdminAuditionsPage({
 
           LIMIT 1
         `,
-        [selectedApplicant.id],
-      );
+      [selectedApplicant.id],
+    );
 
-    evaluation =
-      evaluationRows[0] || null;
+    evaluation = evaluationRows[0] || null;
   }
 
   /*
@@ -581,12 +517,9 @@ export default async function AdminAuditionsPage({
    * =======================================================
    */
 
-  const visibleApplications =
-    filteredApplications.slice(0, limit);
+  const visibleApplications = filteredApplications.slice(0, limit);
 
-  const hasMore =
-    filteredApplications.length >
-    visibleApplications.length;
+  const hasMore = filteredApplications.length > visibleApplications.length;
 
   /*
    * =======================================================
@@ -612,9 +545,8 @@ export default async function AdminAuditionsPage({
             </h1>
 
             <p className="mt-2 text-sm leading-6 text-gray-500">
-              Manage audition sessions,
-              review applicants and
-              evaluate musical talent.
+              Manage audition sessions, review applicants and evaluate musical
+              talent.
             </p>
           </div>
 
@@ -633,19 +565,14 @@ export default async function AdminAuditionsPage({
 
             <p className="mt-1 text-xs text-gray-500">
               {sessions.length} session
-              {sessions.length === 1
-                ? ""
-                : "s"}{" "}
-              created.
+              {sessions.length === 1 ? "" : "s"} created.
             </p>
           </div>
 
           {sessions.length > 0 ? (
             <div className="mt-5 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
               {sessions.map((session) => {
-                const active =
-                  selectedSession?.id ===
-                  session.id;
+                const active = selectedSession?.id === session.id;
 
                 return (
                   <article
@@ -661,9 +588,7 @@ export default async function AdminAuditionsPage({
                     <div className="relative h-40 overflow-hidden bg-[#101828]">
                       {session.cover_image ? (
                         <img
-                          src={
-                            session.cover_image
-                          }
+                          src={session.cover_image}
                           alt={session.title}
                           className="h-full w-full object-cover"
                         />
@@ -676,16 +601,10 @@ export default async function AdminAuditionsPage({
                       <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/5 to-transparent" />
 
                       <div className="absolute left-4 top-4 flex flex-wrap gap-2">
-                        <SessionStatusBadge
-                          status={
-                            session.status
-                          }
-                        />
+                        <SessionStatusBadge status={session.status} />
 
                         <PublishBadge
-                          published={Boolean(
-                            session.is_published,
-                          )}
+                          published={Boolean(session.is_published)}
                         />
                       </div>
                     </div>
@@ -699,9 +618,7 @@ export default async function AdminAuditionsPage({
 
                       {session.short_description && (
                         <p className="mt-2 line-clamp-2 text-xs leading-5 text-gray-500">
-                          {
-                            session.short_description
-                          }
+                          {session.short_description}
                         </p>
                       )}
 
@@ -711,11 +628,7 @@ export default async function AdminAuditionsPage({
                         <div className="flex items-center gap-2">
                           <CalendarDays className="h-3.5 w-3.5 shrink-0 text-[#d40000]" />
 
-                          <span>
-                            {formatDate(
-                              session.audition_date,
-                            )}
-                          </span>
+                          <span>{formatDate(session.audition_date)}</span>
                         </div>
 
                         {session.start_time && (
@@ -723,14 +636,10 @@ export default async function AdminAuditionsPage({
                             <Clock3 className="h-3.5 w-3.5 shrink-0 text-[#d40000]" />
 
                             <span>
-                              {formatTime(
-                                session.start_time,
-                              )}
+                              {formatTime(session.start_time)}
 
                               {session.end_time
-                                ? ` – ${formatTime(
-                                    session.end_time,
-                                  )}`
+                                ? ` – ${formatTime(session.end_time)}`
                                 : ""}
                             </span>
                           </div>
@@ -740,9 +649,7 @@ export default async function AdminAuditionsPage({
                           <div className="flex items-center gap-2">
                             <MapPin className="h-3.5 w-3.5 shrink-0 text-[#d40000]" />
 
-                            <span>
-                              {session.venue}
-                            </span>
+                            <span>{session.venue}</span>
                           </div>
                         )}
                       </div>
@@ -755,9 +662,7 @@ export default async function AdminAuditionsPage({
                         </span>
 
                         <span className="text-xl font-black text-[#101828]">
-                          {Number(
-                            session.applicant_count,
-                          )}
+                          {Number(session.applicant_count)}
                         </span>
                       </div>
 
@@ -765,68 +670,44 @@ export default async function AdminAuditionsPage({
 
                       <div className="mt-4 grid grid-cols-2 gap-3">
                         <Link
-                          href={buildSessionHref(
-                            session.id,
-                          )}
+                          href={buildSessionHref(session.id)}
                           className={`flex h-9 items-center justify-center rounded-lg text-[9px] font-black uppercase tracking-[0.05em] transition ${
                             active
                               ? "bg-[#101828] text-white"
                               : "border border-gray-200 bg-white text-[#101828] hover:border-red-200 hover:text-[#d40000]"
                           }`}
                         >
-                          {active
-                            ? "Selected"
-                            : "Select Session"}
+                          {active ? "Active Session" : "Select Session"}
                         </Link>
 
                         <AuditionSessionActions
                           session={{
                             id: session.id,
 
-                            title:
-                              session.title,
+                            title: session.title,
 
-                            shortDescription:
-                              session.short_description ||
-                              "",
+                            shortDescription: session.short_description || "",
 
-                            description:
-                              session.description ||
-                              "",
+                            description: session.description || "",
 
-                            requirements:
-                              session.requirements ||
-                              "",
+                            requirements: session.requirements || "",
 
-                            auditionDate:
-                              session.audition_date,
+                            auditionDate: session.audition_date,
 
-                            startTime:
-                              session.start_time ||
-                              "",
+                            startTime: session.start_time || "",
 
-                            endTime:
-                              session.end_time ||
-                              "",
+                            endTime: session.end_time || "",
 
                             applicationDeadline:
-                              session.application_deadline ||
-                              "",
+                              session.application_deadline || "",
 
-                            venue:
-                              session.venue ||
-                              "",
+                            venue: session.venue || "",
 
-                            coverImage:
-                              session.cover_image,
+                            coverImage: session.cover_image,
 
-                            status:
-                              session.status,
+                            status: session.status,
 
-                            isPublished:
-                              Boolean(
-                                session.is_published,
-                              ),
+                            isPublished: Boolean(session.is_published),
                           }}
                         />
                       </div>
@@ -844,9 +725,7 @@ export default async function AdminAuditionsPage({
               </h3>
 
               <p className="mt-2 text-sm text-gray-500">
-                Create your first
-                audition session using
-                the button above.
+                Create your first audition session using the button above.
               </p>
             </div>
           )}
@@ -863,9 +742,7 @@ export default async function AdminAuditionsPage({
             icon={<UsersRound />}
             accent="navy"
             description={
-              selectedSession
-                ? selectedSession.title
-                : "No session selected"
+              selectedSession ? selectedSession.title : "No session selected"
             }
           />
 
@@ -915,9 +792,7 @@ export default async function AdminAuditionsPage({
                   <input
                     type="hidden"
                     name="session"
-                    value={
-                      selectedSession.id
-                    }
+                    value={selectedSession.id}
                   />
                 )}
 
@@ -925,80 +800,50 @@ export default async function AdminAuditionsPage({
 
                 <select
                   name="instrument"
-                  defaultValue={
-                    selectedInstrument
-                  }
+                  defaultValue={selectedInstrument}
                   className="h-11 rounded-lg border border-transparent bg-[#eef2ff] px-4 text-xs font-medium text-[#344054] outline-none focus:border-red-200 focus:bg-white"
                 >
-                  <option value="all">
-                    Instrument: All
-                  </option>
+                  <option value="all">Instrument: All</option>
 
-                  {instruments.map(
-                    (instrument) => (
-                      <option
-                        key={instrument}
-                        value={instrument}
-                      >
-                        {instrument}
-                      </option>
-                    ),
-                  )}
+                  {instruments.map((instrument) => (
+                    <option key={instrument} value={instrument}>
+                      {instrument}
+                    </option>
+                  ))}
                 </select>
 
                 {/* DEPARTMENT */}
 
                 <select
                   name="department"
-                  defaultValue={
-                    selectedDepartment
-                  }
+                  defaultValue={selectedDepartment}
                   className="h-11 rounded-lg border border-transparent bg-[#eef2ff] px-4 text-xs font-medium text-[#344054] outline-none focus:border-red-200 focus:bg-white"
                 >
-                  <option value="all">
-                    Department: All
-                  </option>
+                  <option value="all">Department: All</option>
 
-                  {departments.map(
-                    (department) => (
-                      <option
-                        key={department}
-                        value={department}
-                      >
-                        {department}
-                      </option>
-                    ),
-                  )}
+                  {departments.map((department) => (
+                    <option key={department} value={department}>
+                      {department}
+                    </option>
+                  ))}
                 </select>
 
                 {/* STATUS */}
 
                 <select
                   name="status"
-                  defaultValue={
-                    selectedStatus
-                  }
+                  defaultValue={selectedStatus}
                   className="h-11 rounded-lg border border-transparent bg-[#eef2ff] px-4 text-xs font-medium text-[#344054] outline-none focus:border-red-200 focus:bg-white"
                 >
-                  <option value="all">
-                    Status: All
-                  </option>
+                  <option value="all">Status: All</option>
 
-                  <option value="pending">
-                    Pending
-                  </option>
+                  <option value="pending">Pending</option>
 
-                  <option value="under_review">
-                    Under Review
-                  </option>
+                  <option value="under_review">Under Review</option>
 
-                  <option value="approved">
-                    Approved
-                  </option>
+                  <option value="approved">Approved</option>
 
-                  <option value="rejected">
-                    Rejected
-                  </option>
+                  <option value="rejected">Rejected</option>
                 </select>
 
                 <button
@@ -1006,7 +851,6 @@ export default async function AdminAuditionsPage({
                   className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-[#e9efff] px-5 text-[10px] font-bold uppercase tracking-[0.06em] text-[#101828] transition hover:bg-[#101828] hover:text-white"
                 >
                   <Filter className="h-3.5 w-3.5" />
-
                   Apply
                 </button>
               </form>
@@ -1025,17 +869,13 @@ export default async function AdminAuditionsPage({
                 <p className="mt-1 text-xs text-gray-500">
                   {selectedSession
                     ? `${filteredApplications.length} applicant${
-                        filteredApplications.length ===
-                        1
-                          ? ""
-                          : "s"
+                        filteredApplications.length === 1 ? "" : "s"
                       } found in ${selectedSession.title}.`
                     : "Select an audition session first."}
                 </p>
               </div>
 
-              {visibleApplications.length >
-              0 ? (
+              {visibleApplications.length > 0 ? (
                 <>
                   {/* DESKTOP */}
 
@@ -1043,161 +883,119 @@ export default async function AdminAuditionsPage({
                     <table className="w-full min-w-[830px] border-collapse">
                       <thead>
                         <tr className="bg-[#eef2ff]">
-                          <TableHeading>
-                            Profile
-                          </TableHeading>
+                          <TableHeading>Profile</TableHeading>
 
-                          <TableHeading>
-                            Name & ID
-                          </TableHeading>
+                          <TableHeading>Name & ID</TableHeading>
 
-                          <TableHeading>
-                            Dept & Instrument
-                          </TableHeading>
+                          <TableHeading>Dept & Instrument</TableHeading>
 
-                          <TableHeading>
-                            Status
-                          </TableHeading>
+                          <TableHeading>Status</TableHeading>
 
-                          <TableHeading>
-                            Score
-                          </TableHeading>
+                          <TableHeading>Score</TableHeading>
 
-                          <TableHeading align="right">
-                            Action
-                          </TableHeading>
+                          <TableHeading align="right">Action</TableHeading>
                         </tr>
                       </thead>
 
                       <tbody>
-                        {visibleApplications.map(
-                          (application) => {
-                            const active =
-                              selectedApplicant?.id ===
-                              application.id;
+                        {visibleApplications.map((application) => {
+                          const active =
+                            selectedApplicant?.id === application.id;
 
-                            return (
-                              <tr
-                                key={
-                                  application.id
-                                }
-                                className={`border-b border-gray-100 last:border-b-0 ${
-                                  active
-                                    ? "bg-red-50/40"
-                                    : "bg-white hover:bg-[#fafbff]"
-                                }`}
-                              >
-                                {/* PROFILE */}
+                          return (
+                            <tr
+                              key={application.id}
+                              className={`border-b border-gray-100 last:border-b-0 ${
+                                active
+                                  ? "bg-red-50/40"
+                                  : "bg-white hover:bg-[#fafbff]"
+                              }`}
+                            >
+                              {/* PROFILE */}
 
-                                <td className="px-5 py-5">
-                                  <ApplicantAvatar
-                                    name={
-                                      application.full_name
-                                    }
-                                    src={
-                                      application.avatar_url
-                                    }
-                                  />
-                                </td>
+                              <td className="px-5 py-5">
+                                <ApplicantAvatar
+                                  name={application.full_name}
+                                  src={application.avatar_url}
+                                />
+                              </td>
 
-                                {/* NAME */}
+                              {/* NAME */}
 
-                                <td className="px-5 py-5">
-                                  <p className="text-sm font-black text-[#101828]">
-                                    {
-                                      application.full_name
-                                    }
-                                  </p>
+                              <td className="px-5 py-5">
+                                <p className="text-sm font-black text-[#101828]">
+                                  {application.full_name}
+                                </p>
 
-                                  <p className="mt-1 text-[10px] text-gray-500">
-                                    {
-                                      application.student_id
-                                    }
-                                  </p>
-                                </td>
+                                <p className="mt-1 text-[10px] text-gray-500">
+                                  {application.student_id}
+                                </p>
+                              </td>
 
-                                {/* DEPARTMENT */}
+                              {/* DEPARTMENT */}
 
-                                <td className="px-5 py-5">
-                                  <p className="text-xs font-medium text-[#344054]">
-                                    {application.department_short_name ||
-                                      "—"}
-                                  </p>
+                              <td className="px-5 py-5">
+                                <p className="text-xs font-medium text-[#344054]">
+                                  {application.department_short_name || "—"}
+                                </p>
 
-                                  <p className="mt-1 text-[9px] font-black uppercase tracking-[0.05em] text-[#d40000]">
-                                    {
-                                      application.instrument
-                                    }
-                                  </p>
-                                </td>
+                                <p className="mt-1 text-[9px] font-black uppercase tracking-[0.05em] text-[#d40000]">
+                                  {application.instrument}
+                                </p>
+                              </td>
 
-                                {/* STATUS */}
+                              {/* STATUS */}
 
-                                <td className="px-5 py-5">
-                                  <ApplicationStatusBadge
-                                    status={
-                                      application.status
-                                    }
-                                  />
-                                </td>
+                              <td className="px-5 py-5">
+                                <ApplicationStatusBadge
+                                  status={application.status}
+                                />
+                              </td>
 
-                                {/* SCORE */}
+                              {/* SCORE */}
 
-                                <td className="px-5 py-5">
-                                  {application.average_score !==
-                                  null ? (
-                                    <span className="text-sm font-black text-[#101828]">
-                                      {Number(
-                                        application.average_score,
-                                      ).toFixed(
-                                        1,
-                                      )}
-                                      /50
-                                    </span>
-                                  ) : (
-                                    <span className="text-sm text-gray-400">
-                                      —
-                                    </span>
-                                  )}
-                                </td>
-
-                                {/* ACTION */}
-
-                                <td className="px-5 py-5 text-right">
-                                  <Link
-                                    href={buildApplicantHref(
-                                      application.id,
-                                      {
-                                        sessionId:
-                                          selectedSession?.id,
-
-                                        instrument:
-                                          selectedInstrument,
-
-                                        department:
-                                          selectedDepartment,
-
-                                        status:
-                                          selectedStatus,
-
-                                        limit,
-                                      },
+                              <td className="px-5 py-5">
+                                {application.average_score !== null ? (
+                                  <span className="text-sm font-black text-[#101828]">
+                                    {Number(application.average_score).toFixed(
+                                      1,
                                     )}
-                                    className={`text-[10px] font-black uppercase tracking-[0.06em] transition ${
-                                      active
-                                        ? "text-[#101828]"
-                                        : "text-[#d40000] hover:text-[#a60000]"
-                                    }`}
-                                  >
-                                    {active
-                                      ? "Selected"
-                                      : "Evaluate"}
-                                  </Link>
-                                </td>
-                              </tr>
-                            );
-                          },
-                        )}
+                                    /50
+                                  </span>
+                                ) : (
+                                  <span className="text-sm text-gray-400">
+                                    —
+                                  </span>
+                                )}
+                              </td>
+
+                              {/* ACTION */}
+
+                              <td className="px-5 py-5 text-right">
+                                <Link
+                                  href={buildApplicantHref(application.id, {
+                                    sessionId: selectedSession?.id,
+
+                                    instrument: selectedInstrument,
+
+                                    department: selectedDepartment,
+
+                                    status: selectedStatus,
+
+                                    limit,
+                                  })}
+                                  className={`text-[10px] font-black uppercase tracking-[0.06em] transition ${
+                                    active
+                                      ? "text-[#101828]"
+                                      : "text-[#d40000] hover:text-[#a60000]"
+                                  }`}
+                                >
+                                  {active ? "Viewing" : "Evaluate"}
+                                </Link>
+                              </td>
+                            </tr>
+                          );
+                        })}
                       </tbody>
                     </table>
                   </div>
@@ -1205,91 +1003,62 @@ export default async function AdminAuditionsPage({
                   {/* MOBILE */}
 
                   <div className="divide-y divide-gray-100 lg:hidden">
-                    {visibleApplications.map(
-                      (application) => {
-                        const active =
-                          selectedApplicant?.id ===
-                          application.id;
+                    {visibleApplications.map((application) => {
+                      const active = selectedApplicant?.id === application.id;
 
-                        return (
-                          <article
-                            key={
-                              application.id
-                            }
-                            className={`p-5 ${
-                              active
-                                ? "bg-red-50/40"
-                                : "bg-white"
-                            }`}
-                          >
-                            <div className="flex gap-4">
-                              <ApplicantAvatar
-                                name={
-                                  application.full_name
-                                }
-                                src={
-                                  application.avatar_url
-                                }
-                              />
+                      return (
+                        <article
+                          key={application.id}
+                          className={`p-5 ${
+                            active ? "bg-red-50/40" : "bg-white"
+                          }`}
+                        >
+                          <div className="flex gap-4">
+                            <ApplicantAvatar
+                              name={application.full_name}
+                              src={application.avatar_url}
+                            />
 
-                              <div className="min-w-0 flex-1">
-                                <h3 className="text-sm font-black text-[#101828]">
-                                  {
-                                    application.full_name
-                                  }
-                                </h3>
+                            <div className="min-w-0 flex-1">
+                              <h3 className="text-sm font-black text-[#101828]">
+                                {application.full_name}
+                              </h3>
 
-                                <p className="mt-1 text-[10px] text-gray-500">
-                                  {
-                                    application.student_id
-                                  }
-                                </p>
+                              <p className="mt-1 text-[10px] text-gray-500">
+                                {application.student_id}
+                              </p>
 
-                                <div className="mt-3 flex flex-wrap items-center gap-2">
-                                  <ApplicationStatusBadge
-                                    status={
-                                      application.status
-                                    }
-                                  />
+                              <div className="mt-3 flex flex-wrap items-center gap-2">
+                                <ApplicationStatusBadge
+                                  status={application.status}
+                                />
 
-                                  <span className="text-[9px] font-black uppercase text-red-600">
-                                    {
-                                      application.instrument
-                                    }
-                                  </span>
-                                </div>
+                                <span className="text-[9px] font-black uppercase text-red-600">
+                                  {application.instrument}
+                                </span>
                               </div>
                             </div>
+                          </div>
 
-                            <Link
-                              href={buildApplicantHref(
-                                application.id,
-                                {
-                                  sessionId:
-                                    selectedSession?.id,
+                          <Link
+                            href={buildApplicantHref(application.id, {
+                              sessionId: selectedSession?.id,
 
-                                  instrument:
-                                    selectedInstrument,
+                              instrument: selectedInstrument,
 
-                                  department:
-                                    selectedDepartment,
+                              department: selectedDepartment,
 
-                                  status:
-                                    selectedStatus,
+                              status: selectedStatus,
 
-                                  limit,
-                                },
-                              )}
-                              className="mt-4 inline-flex h-10 w-full items-center justify-center rounded-lg border border-red-100 text-[10px] font-bold uppercase tracking-[0.05em] text-red-600"
-                            >
-                              {active
-                                ? "Selected"
-                                : "Evaluate"}
-                            </Link>
-                          </article>
-                        );
-                      },
-                    )}
+                              limit,
+                            })}
+                            className="mt-4 inline-flex h-10 w-full items-center justify-center rounded-lg border border-red-100 text-[10px] font-bold uppercase tracking-[0.05em] text-red-600"
+                          >
+                            {active ? "Viewing" : "Evaluate"}
+                          </Link>
+                        </article>
+                      );
+                    })}
                   </div>
 
                   {/* LOAD MORE */}
@@ -1297,25 +1066,17 @@ export default async function AdminAuditionsPage({
                   {hasMore && (
                     <div className="border-t border-gray-100 bg-[#f4f6fd] px-5 py-4 text-center">
                       <Link
-                        href={buildLoadMoreHref(
-                          limit + 8,
-                          {
-                            sessionId:
-                              selectedSession?.id,
+                        href={buildLoadMoreHref(limit + 8, {
+                          sessionId: selectedSession?.id,
 
-                            instrument:
-                              selectedInstrument,
+                          instrument: selectedInstrument,
 
-                            department:
-                              selectedDepartment,
+                          department: selectedDepartment,
 
-                            status:
-                              selectedStatus,
+                          status: selectedStatus,
 
-                            applicant:
-                              selectedApplicant?.id,
-                          },
-                        )}
+                          applicant: selectedApplicant?.id,
+                        })}
                         className="text-[9px] font-black uppercase tracking-[0.14em] text-[#101828] transition hover:text-[#d40000]"
                       >
                         Load More Applicants
@@ -1354,46 +1115,29 @@ export default async function AdminAuditionsPage({
 
                 <div className="flex items-start gap-3 border-b border-gray-100 px-5 py-5">
                   <ApplicantAvatar
-                    name={
-                      selectedApplicant.full_name
-                    }
-                    src={
-                      selectedApplicant.avatar_url
-                    }
+                    name={selectedApplicant.full_name}
+                    src={selectedApplicant.avatar_url}
                     large
                   />
 
                   <div className="min-w-0 flex-1">
                     <h2 className="text-lg font-black leading-tight text-[#101828]">
-                      {
-                        selectedApplicant.full_name
-                      }
+                      {selectedApplicant.full_name}
                     </h2>
 
                     <p className="mt-1 text-[9px] font-black uppercase tracking-[0.05em] text-[#d40000]">
-                      {
-                        selectedApplicant.instrument
-                      }
+                      {selectedApplicant.instrument}
                     </p>
 
-                    {selectedApplicant.experience_years !==
-                      null && (
+                    {selectedApplicant.experience_years !== null && (
                       <p className="mt-1 text-[9px] font-bold uppercase tracking-[0.04em] text-gray-500">
-                        {Number(
-                          selectedApplicant.experience_years,
-                        ).toFixed(
-                          1,
-                        )}{" "}
+                        {Number(selectedApplicant.experience_years).toFixed(1)}{" "}
                         years experience
                       </p>
                     )}
                   </div>
 
-                  <ApplicationStatusBadge
-                    status={
-                      selectedApplicant.status
-                    }
-                  />
+                  <ApplicationStatusBadge status={selectedApplicant.status} />
                 </div>
 
                 <div className="space-y-6 px-5 py-5">
@@ -1402,9 +1146,7 @@ export default async function AdminAuditionsPage({
                   <section>
                     <div className="overflow-hidden rounded-xl bg-black">
                       <video
-                        src={
-                          selectedApplicant.video_url
-                        }
+                        src={selectedApplicant.video_url}
                         controls
                         preload="metadata"
                         className="aspect-video w-full bg-black object-contain"
@@ -1412,15 +1154,12 @@ export default async function AdminAuditionsPage({
                     </div>
 
                     <a
-                      href={
-                        selectedApplicant.video_url
-                      }
+                      href={selectedApplicant.video_url}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="mt-2 inline-flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-[0.06em] text-gray-500 transition hover:text-[#d40000]"
                     >
                       Open Video
-
                       <ExternalLink className="h-3 w-3" />
                     </a>
                   </section>
@@ -1433,9 +1172,7 @@ export default async function AdminAuditionsPage({
                     </p>
 
                     <p className="mt-1 text-xs font-black text-[#101828]">
-                      {
-                        selectedApplicant.session_title
-                      }
+                      {selectedApplicant.session_title}
                     </p>
 
                     <div className="mt-3 grid grid-cols-2 gap-3 border-t border-gray-200 pt-3">
@@ -1445,9 +1182,7 @@ export default async function AdminAuditionsPage({
                         </p>
 
                         <p className="mt-1 text-[10px] font-bold text-[#101828]">
-                          {
-                            selectedApplicant.student_id
-                          }
+                          {selectedApplicant.student_id}
                         </p>
                       </div>
 
@@ -1457,8 +1192,7 @@ export default async function AdminAuditionsPage({
                         </p>
 
                         <p className="mt-1 text-[10px] font-bold text-[#101828]">
-                          {selectedApplicant.department_short_name ||
-                            "—"}
+                          {selectedApplicant.department_short_name || "—"}
                         </p>
                       </div>
                     </div>
@@ -1473,9 +1207,7 @@ export default async function AdminAuditionsPage({
                       </p>
 
                       <p className="mt-2 text-xs leading-5 text-gray-600">
-                        {
-                          selectedApplicant.experience_details
-                        }
+                        {selectedApplicant.experience_details}
                       </p>
                     </section>
                   )}
@@ -1489,9 +1221,7 @@ export default async function AdminAuditionsPage({
                       </p>
 
                       <p className="mt-2 text-xs leading-5 text-gray-600">
-                        {
-                          selectedApplicant.applicant_note
-                        }
+                        {selectedApplicant.applicant_note}
                       </p>
                     </section>
                   )}
@@ -1501,40 +1231,21 @@ export default async function AdminAuditionsPage({
                   {/* ================================================= */}
 
                   <AuditionEvaluationForm
-                    key={
-                      selectedApplicant.id
-                    }
-                    applicationId={
-                      selectedApplicant.id
-                    }
+                    key={selectedApplicant.id}
+                    applicationId={selectedApplicant.id}
                     initialTechnicalSkill={Number(
-                      evaluation?.technical_skill ??
-                        0,
+                      evaluation?.technical_skill ?? 0,
                     )}
-                    initialRhythmTiming={Number(
-                      evaluation?.rhythm_timing ??
-                        0,
-                    )}
-                    initialCreativity={Number(
-                      evaluation?.creativity ??
-                        0,
-                    )}
+                    initialRhythmTiming={Number(evaluation?.rhythm_timing ?? 0)}
+                    initialCreativity={Number(evaluation?.creativity ?? 0)}
                     initialStagePresence={Number(
-                      evaluation?.stage_presence ??
-                        0,
+                      evaluation?.stage_presence ?? 0,
                     )}
                     initialOverallPerformance={Number(
-                      evaluation?.overall_performance ??
-                        0,
+                      evaluation?.overall_performance ?? 0,
                     )}
-                    initialNotes={
-                      evaluation?.notes ||
-                      ""
-                    }
-                    initialDecision={
-                      evaluation?.decision ||
-                      null
-                    }
+                    initialNotes={evaluation?.notes || ""}
+                    initialDecision={evaluation?.decision || null}
                   />
                 </div>
               </div>
@@ -1570,23 +1281,15 @@ export default async function AdminAuditionsPage({
  * =========================================================
  */
 
-function SessionStatusBadge({
-  status,
-}: {
-  status: SessionStatus;
-}) {
+function SessionStatusBadge({ status }: { status: SessionStatus }) {
   const style = {
-    DRAFT:
-      "bg-slate-600 text-white",
+    DRAFT: "bg-slate-600 text-white",
 
-    OPEN:
-      "bg-green-600 text-white",
+    OPEN: "bg-green-600 text-white",
 
-    CLOSED:
-      "bg-amber-500 text-white",
+    CLOSED: "bg-amber-500 text-white",
 
-    COMPLETED:
-      "bg-[#101828] text-white",
+    COMPLETED: "bg-[#101828] text-white",
   }[status];
 
   return (
@@ -1604,22 +1307,14 @@ function SessionStatusBadge({
  * =========================================================
  */
 
-function PublishBadge({
-  published,
-}: {
-  published: boolean;
-}) {
+function PublishBadge({ published }: { published: boolean }) {
   return (
     <span
       className={`rounded-full bg-white px-3 py-1.5 text-[8px] font-black uppercase tracking-[0.06em] ${
-        published
-          ? "text-green-700"
-          : "text-gray-500"
+        published ? "text-green-700" : "text-gray-500"
       }`}
     >
-      {published
-        ? "Published"
-        : "Not Published"}
+      {published ? "Published" : "Not Published"}
     </span>
   );
 }
@@ -1645,24 +1340,16 @@ function StatCard({
 
   description: string;
 
-  accent:
-    | "navy"
-    | "red"
-    | "green"
-    | "soft-red";
+  accent: "navy" | "red" | "green" | "soft-red";
 }) {
   const accentClass = {
-    navy:
-      "border-t-[#101828]",
+    navy: "border-t-[#101828]",
 
-    red:
-      "border-t-[#d40000]",
+    red: "border-t-[#d40000]",
 
-    green:
-      "border-t-green-600",
+    green: "border-t-green-600",
 
-    "soft-red":
-      "border-t-red-200",
+    "soft-red": "border-t-red-200",
   }[accent];
 
   return (
@@ -1677,9 +1364,7 @@ function StatCard({
 
           <p
             className={`mt-2 text-3xl font-black tracking-tight ${
-              accent === "red"
-                ? "text-[#d40000]"
-                : "text-[#101828]"
+              accent === "red" ? "text-[#d40000]" : "text-[#101828]"
             }`}
           >
             {value}
@@ -1691,9 +1376,7 @@ function StatCard({
         </div>
       </div>
 
-      <p className="mt-4 truncate text-[9px] text-gray-400">
-        {description}
-      </p>
+      <p className="mt-4 truncate text-[9px] text-gray-400">{description}</p>
     </div>
   );
 }
@@ -1715,9 +1398,7 @@ function TableHeading({
   return (
     <th
       className={`px-5 py-4 text-[8px] font-black uppercase tracking-[0.13em] text-gray-600 ${
-        align === "right"
-          ? "text-right"
-          : "text-left"
+        align === "right" ? "text-right" : "text-left"
       }`}
     >
       {children}
@@ -1742,20 +1423,14 @@ function ApplicantAvatar({
 
   large?: boolean;
 }) {
-  const sizeClass = large
-    ? "h-12 w-12"
-    : "h-10 w-10";
+  const sizeClass = large ? "h-12 w-12" : "h-10 w-10";
 
   if (src) {
     return (
       <div
         className={`${sizeClass} shrink-0 overflow-hidden rounded-lg bg-slate-100`}
       >
-        <img
-          src={src}
-          alt={name}
-          className="h-full w-full object-cover"
-        />
+        <img src={src} alt={name} className="h-full w-full object-cover" />
       </div>
     );
   }
@@ -1775,23 +1450,15 @@ function ApplicantAvatar({
  * =========================================================
  */
 
-function ApplicationStatusBadge({
-  status,
-}: {
-  status: ApplicationStatus;
-}) {
+function ApplicationStatusBadge({ status }: { status: ApplicationStatus }) {
   const style = {
-    PENDING:
-      "bg-blue-50 text-blue-700",
+    PENDING: "bg-blue-50 text-blue-700",
 
-    UNDER_REVIEW:
-      "bg-amber-50 text-amber-700",
+    UNDER_REVIEW: "bg-amber-50 text-amber-700",
 
-    APPROVED:
-      "bg-green-50 text-green-700",
+    APPROVED: "bg-green-50 text-green-700",
 
-    REJECTED:
-      "bg-red-50 text-red-600",
+    REJECTED: "bg-red-50 text-red-600",
   }[status];
 
   return (
@@ -1810,27 +1477,17 @@ function ApplicationStatusBadge({
  */
 
 function getInitials(name: string) {
-  const parts = name
-    .trim()
-    .split(/\s+/)
-    .filter(Boolean);
+  const parts = name.trim().split(/\s+/).filter(Boolean);
 
   if (parts.length === 0) {
     return "U";
   }
 
   if (parts.length === 1) {
-    return parts[0]
-      .slice(0, 2)
-      .toUpperCase();
+    return parts[0].slice(0, 2).toUpperCase();
   }
 
-  return (
-    parts[0][0] +
-    parts[
-      parts.length - 1
-    ][0]
-  ).toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
 }
 
 /*
@@ -1840,31 +1497,20 @@ function getInitials(name: string) {
  */
 
 function formatDate(value: string) {
-  const [year, month, day] = value
-    .split("-")
-    .map(Number);
+  const [year, month, day] = value.split("-").map(Number);
 
   if (!year || !month || !day) {
     return value;
   }
 
-  const date = new Date(
-    Date.UTC(
-      year,
-      month - 1,
-      day,
-    ),
-  );
+  const date = new Date(Date.UTC(year, month - 1, day));
 
-  return new Intl.DateTimeFormat(
-    "en-US",
-    {
-      month: "long",
-      day: "numeric",
-      year: "numeric",
-      timeZone: "UTC",
-    },
-  ).format(date);
+  return new Intl.DateTimeFormat("en-US", {
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+    timeZone: "UTC",
+  }).format(date);
 }
 
 /*
@@ -1874,33 +1520,19 @@ function formatDate(value: string) {
  */
 
 function formatTime(value: string) {
-  const [hour, minute] = value
-    .split(":")
-    .map(Number);
+  const [hour, minute] = value.split(":").map(Number);
 
-  if (
-    Number.isNaN(hour) ||
-    Number.isNaN(minute)
-  ) {
+  if (Number.isNaN(hour) || Number.isNaN(minute)) {
     return value;
   }
 
-  const date = new Date(
-    2000,
-    0,
-    1,
-    hour,
-    minute,
-  );
+  const date = new Date(2000, 0, 1, hour, minute);
 
-  return new Intl.DateTimeFormat(
-    "en-US",
-    {
-      hour: "numeric",
-      minute: "2-digit",
-      hour12: true,
-    },
-  ).format(date);
+  return new Intl.DateTimeFormat("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  }).format(date);
 }
 
 /*
@@ -1909,9 +1541,7 @@ function formatTime(value: string) {
  * =========================================================
  */
 
-function buildSessionHref(
-  sessionId: number,
-) {
+function buildSessionHref(sessionId: number) {
   return `/admin/auditions?session=${sessionId}`;
 }
 
@@ -1935,50 +1565,27 @@ function buildApplicantHref(
     limit: number;
   },
 ) {
-  const search =
-    new URLSearchParams();
+  const search = new URLSearchParams();
 
   if (options.sessionId) {
-    search.set(
-      "session",
-      String(options.sessionId),
-    );
+    search.set("session", String(options.sessionId));
   }
 
-  if (
-    options.instrument !== "all"
-  ) {
-    search.set(
-      "instrument",
-      options.instrument,
-    );
+  if (options.instrument !== "all") {
+    search.set("instrument", options.instrument);
   }
 
-  if (
-    options.department !== "all"
-  ) {
-    search.set(
-      "department",
-      options.department,
-    );
+  if (options.department !== "all") {
+    search.set("department", options.department);
   }
 
   if (options.status !== "all") {
-    search.set(
-      "status",
-      options.status,
-    );
+    search.set("status", options.status);
   }
 
-  search.set(
-    "applicant",
-    String(applicantId),
-  );
+  search.set("applicant", String(applicantId));
 
-  search.set(
-    "limit",
-    String(options.limit),
-  );
+  search.set("limit", String(options.limit));
 
   return `/admin/auditions?${search.toString()}`;
 }
@@ -2003,52 +1610,29 @@ function buildLoadMoreHref(
     applicant?: number;
   },
 ) {
-  const search =
-    new URLSearchParams();
+  const search = new URLSearchParams();
 
   if (options.sessionId) {
-    search.set(
-      "session",
-      String(options.sessionId),
-    );
+    search.set("session", String(options.sessionId));
   }
 
-  if (
-    options.instrument !== "all"
-  ) {
-    search.set(
-      "instrument",
-      options.instrument,
-    );
+  if (options.instrument !== "all") {
+    search.set("instrument", options.instrument);
   }
 
-  if (
-    options.department !== "all"
-  ) {
-    search.set(
-      "department",
-      options.department,
-    );
+  if (options.department !== "all") {
+    search.set("department", options.department);
   }
 
   if (options.status !== "all") {
-    search.set(
-      "status",
-      options.status,
-    );
+    search.set("status", options.status);
   }
 
   if (options.applicant) {
-    search.set(
-      "applicant",
-      String(options.applicant),
-    );
+    search.set("applicant", String(options.applicant));
   }
 
-  search.set(
-    "limit",
-    String(nextLimit),
-  );
+  search.set("limit", String(nextLimit));
 
   return `/admin/auditions?${search.toString()}`;
 }
