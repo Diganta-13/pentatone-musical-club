@@ -1,9 +1,9 @@
 import type { ReactNode } from "react";
+
 import { redirect } from "next/navigation";
 
 import AdminHeader from "@/components/admin/admin-header";
 import AdminSidebar from "@/components/admin/admin-sidebar";
-import Footer from "@/components/layout/footer";
 
 import { getCurrentUser } from "@/lib/current-user";
 
@@ -20,10 +20,13 @@ export default async function AdminLayout({
    * ==============================
    */
 
-  const user = await getCurrentUser();
+  const user =
+    await getCurrentUser();
 
   /*
-   * No valid session
+   * ==============================
+   * NO VALID SESSION
+   * ==============================
    */
 
   if (!user) {
@@ -31,15 +34,26 @@ export default async function AdminLayout({
   }
 
   /*
-   * Only ADMIN can access /admin
+   * ==============================
+   * ONLY ADMIN CAN ACCESS /admin
+   * ==============================
    */
 
-  if (user.role !== "ADMIN") {
+  if (
+    user.role !== "ADMIN"
+  ) {
     redirect("/dashboard");
   }
 
+  /*
+   * ==============================
+   * ADMIN LAYOUT
+   * ==============================
+   */
+
   return (
     <div className="min-h-screen bg-[#f6f7fc]">
+
       {/* ============================== */}
       {/* FIXED ADMIN SIDEBAR */}
       {/* ============================== */}
@@ -51,24 +65,23 @@ export default async function AdminLayout({
       {/* ============================== */}
 
       <div className="flex min-h-screen flex-col lg:ml-[250px]">
-        {/* Admin Header */}
+
+        {/* ADMIN HEADER */}
 
         <AdminHeader
-          fullName={user.fullName}
+          fullName={
+            user.fullName
+          }
         />
 
-        {/* Page Content */}
+        {/* PAGE CONTENT */}
 
-        <div className="flex-1">
+        <main className="flex-1">
           {children}
-        </div>
+        </main>
 
-        {/* ============================== */}
-        {/* SAME GLOBAL FOOTER */}
-        {/* ============================== */}
-
-        <Footer />
       </div>
+
     </div>
   );
 }

@@ -5,6 +5,15 @@ import {
   MapPin,
 } from "lucide-react";
 
+const CLUB_EMAIL =
+  "pentatonemusicalclub18@gmail.com";
+
+const FACEBOOK_URL =
+  "https://www.facebook.com/PentatoneMusicalClub";
+
+const YOUTUBE_URL =
+  "https://www.youtube.com/@pentatonemusicalclub409";
+
 const quickLinks = [
   {
     label: "Home",
@@ -36,36 +45,14 @@ function FacebookIcon() {
   );
 }
 
-function InstagramIcon() {
+function YouTubeIcon() {
   return (
     <svg
       viewBox="0 0 24 24"
       aria-hidden="true"
-      className="h-5 w-5 fill-none stroke-current"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
+      className="h-5 w-5 fill-current"
     >
-      <rect
-        x="3"
-        y="3"
-        width="18"
-        height="18"
-        rx="5"
-      />
-
-      <circle
-        cx="12"
-        cy="12"
-        r="4"
-      />
-
-      <circle
-        cx="17.5"
-        cy="6.5"
-        r="1"
-        className="fill-current stroke-none"
-      />
+      <path d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.6 12 3.6 12 3.6s-7.5 0-9.4.5A3 3 0 0 0 .5 6.2 31 31 0 0 0 0 12a31 31 0 0 0 .5 5.8 3 3 0 0 0 2.1 2.1c1.9.5 9.4.5 9.4.5s7.5 0 9.4-.5a3 3 0 0 0 2.1-2.1A31 31 0 0 0 24 12a31 31 0 0 0-.5-5.8ZM9.6 15.6V8.4L15.8 12l-6.2 3.6Z" />
     </svg>
   );
 }
@@ -73,72 +60,102 @@ function InstagramIcon() {
 export default function Footer() {
   return (
     <footer className="bg-[#273142] text-white">
+
       <div className="mx-auto max-w-[1500px] px-5 py-16 sm:px-8 lg:px-12 lg:py-20 xl:px-20">
+
         <div className="grid gap-12 sm:grid-cols-2 lg:grid-cols-[1.3fr_0.8fr_0.9fr_1.2fr]">
-          {/* Description */}
+
+          {/* ================================= */}
+          {/* CLUB DESCRIPTION */}
+          {/* ================================= */}
 
           <div>
+
             <p className="max-w-sm text-sm leading-7 text-slate-300">
-              Amplifying talent and
-              fostering musical excellence
-              at Sylhet Engineering College.
-              A community for musicians,
-              performers, and music lovers.
+              Amplifying talent and fostering
+              musical excellence at Sylhet
+              Engineering College. A community
+              for musicians, performers, and
+              music lovers.
             </p>
 
-            {/* Visual social icons.
-                Real social URLs can be connected later. */}
+            {/* SOCIAL LINKS */}
 
             <div className="mt-7 flex items-center gap-3">
-              <span className="flex h-11 w-11 items-center justify-center rounded-full bg-white/10 text-white">
-                <FacebookIcon />
-              </span>
 
-              <span className="flex h-11 w-11 items-center justify-center rounded-full bg-white/10 text-white">
-                <InstagramIcon />
-              </span>
+              {/* FACEBOOK */}
+
+              <a
+                href={FACEBOOK_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Pentatone Musical Club Facebook"
+                className="flex h-11 w-11 items-center justify-center rounded-full bg-white/10 text-white transition hover:bg-[#ed0000]"
+              >
+                <FacebookIcon />
+              </a>
+
+              {/* YOUTUBE */}
+
+              <a
+                href={YOUTUBE_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Pentatone Musical Club YouTube"
+                className="flex h-11 w-11 items-center justify-center rounded-full bg-white/10 text-white transition hover:bg-[#ed0000]"
+              >
+                <YouTubeIcon />
+              </a>
+
             </div>
+
           </div>
 
-          {/* Quick links */}
+          {/* ================================= */}
+          {/* QUICK LINKS */}
+          {/* ================================= */}
 
           <div>
+
             <h3 className="text-sm font-bold uppercase tracking-wider text-white">
               Quick Links
             </h3>
 
             <ul className="mt-6 space-y-4">
+
               {quickLinks.map(
                 (link) => (
                   <li
-                    key={
-                      link.label
-                    }
+                    key={link.label}
                   >
                     <Link
-                      href={
-                        link.href
-                      }
+                      href={link.href}
                       className="text-sm text-slate-300 transition hover:text-[#ed0000]"
                     >
-                      {
-                        link.label
-                      }
+                      {link.label}
                     </Link>
                   </li>
                 ),
               )}
+
             </ul>
+
           </div>
 
-          {/* Resources */}
+          {/* ================================= */}
+          {/* RESOURCES */}
+          {/* ================================= */}
 
           <div>
+
             <h3 className="text-sm font-bold uppercase tracking-wider text-white">
               Resources
             </h3>
 
             <ul className="mt-6 space-y-4">
+
+              {/* GALLERY */}
+
               <li>
                 <Link
                   href="/gallery"
@@ -148,87 +165,114 @@ export default function Footer() {
                 </Link>
               </li>
 
-              <li>
-                <span className="text-sm text-slate-400">
-                  Practice Materials
-                </span>
-              </li>
+              {/* PRACTICE MATERIALS */}
 
               <li>
-                <a
-                  href="mailto:pentatone.sec@gmail.com"
+                <Link
+                  href="/resources"
+                  className="text-sm text-slate-300 transition hover:text-[#ed0000]"
+                >
+                  Practice Materials
+                </Link>
+              </li>
+
+              {/* CONTACT */}
+
+              <li>
+                <Link
+                  href="/contact"
                   className="text-sm text-slate-300 transition hover:text-[#ed0000]"
                 >
                   Contact
-                </a>
+                </Link>
               </li>
 
+              {/* SUPPORT */}
+
               <li>
-                <a
-                  href="mailto:pentatone.sec@gmail.com"
+                <Link
+                  href="/contact"
                   className="text-sm text-slate-300 transition hover:text-[#ed0000]"
                 >
                   Support
-                </a>
+                </Link>
               </li>
+
             </ul>
+
           </div>
 
-          {/* Campus */}
+          {/* ================================= */}
+          {/* CAMPUS */}
+          {/* ================================= */}
 
           <div>
+
             <h3 className="text-sm font-bold uppercase tracking-wider text-white">
               Campus
             </h3>
 
             <div className="mt-6 space-y-5">
+
+              {/* LOCATION */}
+
               <div className="flex items-start gap-3">
+
                 <MapPin
                   className="mt-1 h-5 w-5 shrink-0 text-[#ed0000]"
-                  strokeWidth={
-                    1.8
-                  }
+                  strokeWidth={1.8}
                 />
 
                 <p className="text-sm leading-7 text-slate-300">
-                  Sylhet Engineering
-                  College
+                  Sylhet Engineering College
                   <br />
-                  Tilagor,
-                  Sylhet-3100
+                  Tilagor, Sylhet-3100
                   <br />
                   Bangladesh
                 </p>
+
               </div>
 
-              <div className="flex items-center gap-3">
+              {/* EMAIL */}
+
+              <div className="flex items-start gap-3">
+
                 <Mail
-                  className="h-5 w-5 shrink-0 text-[#ed0000]"
-                  strokeWidth={
-                    1.8
-                  }
+                  className="mt-0.5 h-5 w-5 shrink-0 text-[#ed0000]"
+                  strokeWidth={1.8}
                 />
 
                 <a
-                  href="mailto:pentatone.sec@gmail.com"
-                  className="break-all text-sm text-slate-300 transition hover:text-[#ed0000]"
+                  href={`mailto:${CLUB_EMAIL}`}
+                  className="break-all text-sm leading-6 text-slate-300 transition hover:text-[#ed0000]"
                 >
-                  pentatone.sec@gmail.com
+                  {CLUB_EMAIL}
                 </a>
+
               </div>
+
             </div>
+
           </div>
+
         </div>
 
+        {/* ================================= */}
+        {/* BOTTOM COPYRIGHT */}
+        {/* ================================= */}
+
         <div className="mt-14 border-t border-white/10 pt-7 text-center">
+
           <p className="text-sm text-slate-400">
-            © 2026 Pentatone Musical
-            Club, Sylhet Engineering
-            College. All rights
-            reserved.
+            © 2026 Pentatone Musical Club,
+            Sylhet Engineering College.
+            All rights reserved.
           </p>
+
         </div>
+
       </div>
+
     </footer>
   );
 }

@@ -4,15 +4,16 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 import {
-  CalendarDays,
-  FolderOpen,
-  Images,
-  LayoutDashboard,
-  Megaphone,
-  Mic2,
+  Bell,
+  Calendar,
+  Folder,
+  Home,
+  Image as ImageIcon,
+  MessageSquare,
+  Mic,
   Settings,
-  UserRoundPlus,
-  UsersRound,
+  UserPlus,
+  Users,
 } from "lucide-react";
 
 import AdminLogoutButton from "@/components/admin/admin-logout-button";
@@ -20,7 +21,7 @@ import BrandLogo from "@/components/layout/brand-logo";
 
 /*
  * =====================================
- * MENU
+ * MENU ITEMS
  * =====================================
  */
 
@@ -28,182 +29,207 @@ const menuItems = [
   {
     label: "Dashboard",
     href: "/admin",
-    icon: LayoutDashboard,
-    enabled: true,
+    icon: Home,
   },
-
   {
     label: "Members",
     href: "/admin/members",
-    icon: UsersRound,
-    enabled: true,
+    icon: Users,
   },
-
   {
     label: "Requests",
     href: "/admin/requests",
-    icon: UserRoundPlus,
-    enabled: true,
+    icon: UserPlus,
   },
-
   {
     label: "Events",
     href: "/admin/events",
-    icon: CalendarDays,
-    enabled: true,
+    icon: Calendar,
   },
-
   {
     label: "Auditions",
     href: "/admin/auditions",
-    icon: Mic2,
-    enabled: true,
+    icon: Mic,
   },
-
   {
     label: "Announcements",
     href: "/admin/announcements",
-    icon: Megaphone,
-    enabled: true,
+    icon: Bell,
   },
-
   {
     label: "Resources",
     href: "/admin/resources",
-    icon: FolderOpen,
-    enabled: false,
+    icon: Folder,
+  },
+
+  /*
+   * NEW
+   */
+  {
+    label: "Messages",
+    href: "/admin/messages",
+    icon: MessageSquare,
   },
 
   {
     label: "Gallery",
     href: "/admin/gallery",
-    icon: Images,
-    enabled: true,
+    icon: ImageIcon,
   },
 ];
 
-
 /*
  * =====================================
- * COMPONENT
+ * ADMIN SIDEBAR
  * =====================================
  */
 
 export default function AdminSidebar() {
   const pathname = usePathname();
 
+  /*
+   * =====================================
+   * ACTIVE CHECK
+   * =====================================
+   */
+
+  function isActive(
+    href: string,
+  ) {
+    if (href === "/admin") {
+      return pathname === "/admin";
+    }
+
+    return pathname.startsWith(
+      href,
+    );
+  }
+
+  const settingsActive =
+    pathname.startsWith(
+      "/admin/settings",
+    );
+
   return (
-    <aside className="fixed left-0 top-0 z-40 hidden h-screen w-[250px] flex-col bg-[#273244] text-white lg:flex">
+    <aside className="fixed bottom-0 left-0 top-0 z-40 hidden w-[250px] flex-col bg-[#27364a] text-white lg:flex">
 
+      {/* ================================= */}
       {/* LOGO */}
+      {/* ================================= */}
 
-      <div className="px-6 pb-6 pt-7">
+      <div className="border-b border-white/10 px-6 py-6">
 
         <BrandLogo
           priority
           className="h-14"
         />
 
-        <p className="mt-3 text-[9px] font-bold uppercase tracking-[0.16em] text-slate-400">
+        <p className="mt-3 text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400">
           Admin Portal
         </p>
 
       </div>
 
+      {/* ================================= */}
+      {/* MAIN NAVIGATION */}
+      {/* ================================= */}
 
-      {/* NAVIGATION */}
+      <nav className="flex-1 overflow-y-auto px-4 py-5">
 
-      <nav className="overflow-y-auto border-t border-white/10 px-3 py-5">
+        <div className="space-y-1">
 
-        <div className="space-y-1.5">
+          {menuItems.map(
+            (item) => {
+              const Icon =
+                item.icon;
 
-          {menuItems.map((item) => {
-
-            const Icon = item.icon;
-
-            const active =
-              item.href === "/admin"
-                ? pathname === "/admin"
-                : pathname.startsWith(item.href);
-
-
-            if (!item.enabled) {
+              const active =
+                isActive(
+                  item.href,
+                );
 
               return (
-
-                <div
-                  key={item.label}
-                  title="This module will be connected shortly"
-                  className="flex cursor-default items-center gap-4 rounded-lg px-4 py-3 text-[12px] font-bold uppercase tracking-[0.08em] text-slate-300/50"
+                <Link
+                  key={
+                    item.href
+                  }
+                  href={
+                    item.href
+                  }
+                  className={`group flex items-center gap-4 rounded-xl px-4 py-3.5 text-[12px] font-black uppercase tracking-[0.04em] transition ${
+                    active
+                      ? "bg-red-600 text-white shadow-lg shadow-red-950/20"
+                      : "text-slate-100 hover:bg-white/10 hover:text-white"
+                  }`}
                 >
 
-                  <Icon className="h-[19px] w-[19px] shrink-0" />
+                  <Icon
+                    className={`h-[19px] w-[19px] shrink-0 ${
+                      active
+                        ? "text-white"
+                        : "text-slate-300 group-hover:text-white"
+                    }`}
+                    strokeWidth={
+                      1.8
+                    }
+                  />
 
                   <span>
-                    {item.label}
+                    {
+                      item.label
+                    }
                   </span>
 
-                </div>
-
+                </Link>
               );
-
-            }
-
-
-            return (
-
-              <Link
-                key={item.href}
-                href={item.href}
-
-                className={`flex items-center gap-4 rounded-lg px-4 py-3 text-[12px] font-bold uppercase tracking-[0.08em] transition ${
-                  active
-                    ? "bg-[#d90000] text-white shadow-sm"
-                    : "text-slate-200 hover:bg-white/5 hover:text-white"
-                }`}
-              >
-
-                <Icon className="h-[19px] w-[19px] shrink-0" />
-
-                <span>
-                  {item.label}
-                </span>
-
-              </Link>
-
-            );
-
-          })}
+            },
+          )}
 
         </div>
 
       </nav>
 
+      {/* ================================= */}
+      {/* BOTTOM SECTION */}
+      {/* ================================= */}
 
+      <div className="border-t border-white/10 px-4 py-5">
 
-      {/* SETTINGS + LOGOUT */}
+        {/* SETTINGS */}
 
-      <div className="mx-3 border-t border-white/10 pb-5 pt-4">
-
-        <div
-          title="Settings will be connected shortly"
-
-          className="flex cursor-default items-center gap-4 px-3 py-3 text-[12px] font-bold uppercase tracking-[0.12em] text-slate-300/50"
+        <Link
+          href="/admin/settings"
+          className={`group flex items-center gap-4 rounded-xl px-4 py-3.5 text-[12px] font-black uppercase tracking-[0.04em] transition ${
+            settingsActive
+              ? "bg-red-600 text-white shadow-lg shadow-red-950/20"
+              : "text-slate-100 hover:bg-white/10 hover:text-white"
+          }`}
         >
 
-          <Settings className="h-[19px] w-[19px] shrink-0" />
+          <Settings
+            className={`h-[19px] w-[19px] shrink-0 ${
+              settingsActive
+                ? "text-white"
+                : "text-slate-300 group-hover:text-white"
+            }`}
+            strokeWidth={1.8}
+          />
 
           <span>
             Settings
           </span>
 
+        </Link>
+
+        {/* LOGOUT */}
+
+        <div className="mt-2">
+
+          <AdminLogoutButton />
+
         </div>
 
-
-        <AdminLogoutButton />
-
       </div>
-
 
     </aside>
   );
