@@ -131,27 +131,27 @@ export default function NavbarClient({
 
         <div className="hidden items-center gap-4 lg:flex xl:gap-6">
 
-          {!user ? (
-            <>
-              {/* LOGIN */}
+         {!user ? (
+  <>
+    {pathname !== "/login" && (
+      <Link
+        href="/login"
+        className="whitespace-nowrap text-[13px] font-semibold text-gray-800 transition-colors hover:text-red-600"
+      >
+        Login
+      </Link>
+    )}
 
-              <Link
-                href="/login"
-                className="whitespace-nowrap text-[13px] font-semibold text-gray-800 transition-colors hover:text-red-600"
-              >
-                Login
-              </Link>
-
-              {/* JOIN CLUB */}
-
-              <Link
-                href="/register"
-                className="whitespace-nowrap rounded-full bg-red-600 px-6 py-3 text-[13px] font-bold text-white shadow-lg shadow-red-200 transition hover:bg-red-700 xl:px-7"
-              >
-                Join Club
-              </Link>
-            </>
-          ) : (
+    {pathname !== "/register" && (
+      <Link
+        href="/register"
+        className="whitespace-nowrap rounded-full bg-red-600 px-6 py-3 text-[13px] font-bold text-white shadow-lg shadow-red-200 transition hover:bg-red-700 xl:px-7"
+      >
+        Join Club
+      </Link>
+    )}
+  </>
+) : (
             <>
               {/* DASHBOARD / ADMIN PORTAL */}
 
@@ -250,38 +250,30 @@ export default function NavbarClient({
             <div className="mt-4 border-t border-gray-100 pt-4">
 
               {!user ? (
-                <div className="grid grid-cols-2 gap-3">
+  <div className="flex flex-col gap-3">
 
-                  {/* LOGIN */}
+    {pathname !== "/login" && (
+      <Link
+        href="/login"
+        onClick={() => setIsMenuOpen(false)}
+        className="rounded-lg border border-red-600 px-4 py-3 text-center text-sm font-semibold text-red-600 transition hover:bg-red-50"
+      >
+        Login
+      </Link>
+    )}
 
-                  <Link
-                    href="/login"
-                    onClick={() =>
-                      setIsMenuOpen(
-                        false,
-                      )
-                    }
-                    className="rounded-lg border border-red-600 px-4 py-3 text-center text-sm font-semibold text-red-600 transition hover:bg-red-50"
-                  >
-                    Login
-                  </Link>
+    {pathname !== "/register" && (
+      <Link
+        href="/register"
+        onClick={() => setIsMenuOpen(false)}
+        className="rounded-lg bg-red-600 px-4 py-3 text-center text-sm font-semibold text-white transition hover:bg-red-700"
+      >
+        Join Club
+      </Link>
+    )}
 
-                  {/* JOIN CLUB */}
-
-                  <Link
-                    href="/register"
-                    onClick={() =>
-                      setIsMenuOpen(
-                        false,
-                      )
-                    }
-                    className="rounded-lg bg-red-600 px-4 py-3 text-center text-sm font-semibold text-white transition hover:bg-red-700"
-                  >
-                    Join Club
-                  </Link>
-
-                </div>
-              ) : (
+  </div>
+) : (
                 <div className="flex flex-col gap-4">
 
                   {/* DASHBOARD */}
