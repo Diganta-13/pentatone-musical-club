@@ -2,18 +2,11 @@
 
 import Link from "next/link";
 
-import {
-  Menu,
-  X,
-} from "lucide-react";
+import { Menu, X } from "lucide-react";
 
-import {
-  usePathname,
-} from "next/navigation";
+import { usePathname } from "next/navigation";
 
-import {
-  useState,
-} from "react";
+import { useState } from "react";
 
 import BrandLogo from "@/components/layout/brand-logo";
 import LogoutButton from "@/components/auth/logout-button";
@@ -38,6 +31,10 @@ const navLinks = [
     href: "/events",
   },
   {
+    label: "Announcements",
+    href: "/announcements",
+  },
+  {
     label: "Auditions",
     href: "/auditions",
   },
@@ -47,31 +44,19 @@ const navLinks = [
   },
 ];
 
-export default function NavbarClient({
-  user,
-}: NavbarClientProps) {
+export default function NavbarClient({ user }: NavbarClientProps) {
   const pathname = usePathname();
 
-  const [isMenuOpen, setIsMenuOpen] =
-    useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-  const dashboardHref =
-    user?.role === "ADMIN"
-      ? "/admin"
-      : "/dashboard";
+  const dashboardHref = user?.role === "ADMIN" ? "/admin" : "/dashboard";
 
-  const dashboardLabel =
-    user?.role === "ADMIN"
-      ? "Admin Portal"
-      : "Dashboard";
+  const dashboardLabel = user?.role === "ADMIN" ? "Admin Portal" : "Dashboard";
 
   return (
     <header className="sticky top-0 z-50 border-b border-gray-100 bg-white/95 backdrop-blur-md">
       <nav className="mx-auto flex h-[74px] max-w-[1180px] items-center justify-between px-5 lg:px-8">
-        <BrandLogo
-          priority
-          className="h-12"
-        />
+        <BrandLogo priority className="h-12" />
 
         {/* Desktop navigation */}
 
@@ -80,23 +65,15 @@ export default function NavbarClient({
             const isActive =
               link.href === "/"
                 ? pathname === "/"
-                : pathname.startsWith(
-                    link.href,
-                  );
+                : pathname.startsWith(link.href);
 
             return (
               <Link
                 key={link.label}
                 href={link.href}
-                aria-current={
-                  isActive
-                    ? "page"
-                    : undefined
-                }
+                aria-current={isActive ? "page" : undefined}
                 className={`relative py-2 text-[13px] font-semibold tracking-wide transition-colors ${
-                  isActive
-                    ? "text-red-600"
-                    : "text-gray-600 hover:text-red-600"
+                  isActive ? "text-red-600" : "text-gray-600 hover:text-red-600"
                 }`}
               >
                 {link.label}
@@ -137,10 +114,7 @@ export default function NavbarClient({
                 {dashboardLabel}
               </Link>
 
-              <LogoutButton
-                variant="nav"
-                redirectTo="/"
-              />
+              <LogoutButton variant="nav" redirectTo="/" />
             </>
           )}
         </div>
@@ -151,19 +125,10 @@ export default function NavbarClient({
           type="button"
           aria-label="Open navigation menu"
           aria-expanded={isMenuOpen}
-          onClick={() =>
-            setIsMenuOpen(
-              (previous) =>
-                !previous,
-            )
-          }
+          onClick={() => setIsMenuOpen((previous) => !previous)}
           className="flex h-10 w-10 items-center justify-center rounded-lg border border-gray-200 text-gray-900 lg:hidden"
         >
-          {isMenuOpen ? (
-            <X size={22} />
-          ) : (
-            <Menu size={22} />
-          )}
+          {isMenuOpen ? <X size={22} /> : <Menu size={22} />}
         </button>
       </nav>
 
@@ -176,9 +141,7 @@ export default function NavbarClient({
               <Link
                 key={link.label}
                 href={link.href}
-                onClick={() =>
-                  setIsMenuOpen(false)
-                }
+                onClick={() => setIsMenuOpen(false)}
                 className="rounded-lg px-4 py-3 text-sm font-semibold text-gray-700 transition hover:bg-gray-50 hover:text-red-600"
               >
                 {link.label}
@@ -190,11 +153,7 @@ export default function NavbarClient({
                 <div className="grid grid-cols-2 gap-3">
                   <Link
                     href="/login"
-                    onClick={() =>
-                      setIsMenuOpen(
-                        false,
-                      )
-                    }
+                    onClick={() => setIsMenuOpen(false)}
                     className="rounded-lg border border-red-600 px-4 py-3 text-center text-sm font-semibold text-red-600"
                   >
                     Login
@@ -202,11 +161,7 @@ export default function NavbarClient({
 
                   <Link
                     href="/register"
-                    onClick={() =>
-                      setIsMenuOpen(
-                        false,
-                      )
-                    }
+                    onClick={() => setIsMenuOpen(false)}
                     className="rounded-lg bg-red-600 px-4 py-3 text-center text-sm font-semibold text-white"
                   >
                     Join Club
@@ -215,23 +170,14 @@ export default function NavbarClient({
               ) : (
                 <div className="flex flex-col gap-4">
                   <Link
-                    href={
-                      dashboardHref
-                    }
-                    onClick={() =>
-                      setIsMenuOpen(
-                        false,
-                      )
-                    }
+                    href={dashboardHref}
+                    onClick={() => setIsMenuOpen(false)}
                     className="rounded-lg bg-red-600 px-4 py-3 text-center text-sm font-semibold text-white"
                   >
                     {dashboardLabel}
                   </Link>
 
-                  <LogoutButton
-                    variant="nav"
-                    redirectTo="/"
-                  />
+                  <LogoutButton variant="nav" redirectTo="/" />
                 </div>
               )}
             </div>

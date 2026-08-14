@@ -64,7 +64,7 @@ const menuItems = [
     label: "Announcements",
     href: "/admin/announcements",
     icon: Megaphone,
-    enabled: false,
+    enabled: true,
   },
 
   {
