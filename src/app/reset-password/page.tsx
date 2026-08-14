@@ -4,19 +4,37 @@ import {
   ShieldCheck,
 } from "lucide-react";
 
-import ForgotPasswordForm from "@/components/auth/forgot-password-form";
-import Footer from "@/components/layout/footer";
+import ResetPasswordForm from "@/components/auth/reset-password-form";
+
 import Navbar from "@/components/layout/navbar";
+import Footer from "@/components/layout/footer";
 
 export const metadata = {
   title:
-    "Forgot Password | Pentatone Musical Club",
+    "Reset Password | Pentatone Musical Club",
 
   description:
-    "Reset your Pentatone Musical Club account password.",
+    "Create a new password for your Pentatone Musical Club account.",
 };
 
-export default function ForgotPasswordPage() {
+type ResetPasswordPageProps = {
+  searchParams: Promise<{
+    token?: string;
+  }>;
+};
+
+export default async function ResetPasswordPage({
+  searchParams,
+}: ResetPasswordPageProps) {
+  const params =
+    await searchParams;
+
+  const token =
+    typeof params.token ===
+    "string"
+      ? params.token
+      : "";
+
   return (
     <>
       <Navbar />
@@ -30,22 +48,24 @@ export default function ForgotPasswordPage() {
           <div className="hidden lg:block">
 
             <span className="inline-flex rounded-full bg-red-50 px-4 py-2 text-[9px] font-black uppercase tracking-[0.08em] text-[#d40000]">
-              Account Recovery
+              Secure Account Recovery
             </span>
 
             <h2 className="mt-6 max-w-lg text-5xl font-black leading-[1.05] tracking-[-0.04em] text-[#111827]">
-              Get Back Into Your{" "}
+
+              Create Your New{" "}
+
               <span className="text-[#d40000]">
-                Pentatone
-              </span>{" "}
-              Account.
+                Password.
+              </span>
+
             </h2>
 
             <p className="mt-5 max-w-lg text-sm leading-7 text-slate-500">
-              We&apos;ll send a secure,
-              time-limited password reset
-              link to your registered email
-              address.
+              Choose a secure new
+              password for your
+              Pentatone Musical Club
+              account.
             </p>
 
             <div className="mt-9 space-y-5">
@@ -55,23 +75,23 @@ export default function ForgotPasswordPage() {
                   <ShieldCheck />
                 }
                 title="Secure Reset"
-                description="Your reset link is protected with a secure one-time token."
+                description="Your password reset request is verified using a secure one-time token."
               />
 
               <Feature
                 icon={
                   <KeyRound />
                 }
-                title="15-Minute Expiry"
-                description="The password reset link automatically expires after 15 minutes."
+                title="One-Time Link"
+                description="After your password is changed, the reset link can no longer be used."
               />
 
               <Feature
                 icon={
                   <LockKeyhole />
                 }
-                title="Private Account Recovery"
-                description="We never reveal whether an email is registered in the system."
+                title="Encrypted Password"
+                description="Your new password is securely hashed before being stored."
               />
 
             </div>
@@ -82,7 +102,9 @@ export default function ForgotPasswordPage() {
 
           <div className="flex justify-center lg:justify-end">
 
-            <ForgotPasswordForm />
+            <ResetPasswordForm
+              token={token}
+            />
 
           </div>
 
@@ -110,7 +132,9 @@ function Feature({
     <div className="flex max-w-lg gap-4">
 
       <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white text-[#d40000] shadow-sm [&>svg]:h-5 [&>svg]:w-5">
+
         {icon}
+
       </div>
 
       <div>
